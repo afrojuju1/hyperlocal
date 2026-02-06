@@ -4,10 +4,35 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
+class BusinessDayHours(BaseModel):
+    day: str
+    open: Optional[str] = None
+    close: Optional[str] = None
+    closed: bool = False
+
+
+class BusinessHours(BaseModel):
+    timezone: Optional[str] = None
+    weekly: List[BusinessDayHours] = Field(default_factory=list)
+    notes: Optional[str] = None
+    display: Optional[str] = None
+
+
+class BusinessDetails(BaseModel):
+    name: str
+    website: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    postal_code: Optional[str] = None
+    phone: Optional[str] = None
+    hours: Optional[BusinessHours] = None
+    service_area: Optional[str] = None
+
+
 class CreativeBrief(BaseModel):
     campaign_id: Optional[int] = None
-    business_name: str
-    business_url: Optional[str] = None
+    business_details: BusinessDetails
     product: str
     offer: str
     tone: str

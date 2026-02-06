@@ -35,6 +35,7 @@ class FlyerPipeline:
         if RUNTIME_CONFIG.persist_enabled and RUNTIME_CONFIG.database_url:
             session_factory = build_sessionmaker(RUNTIME_CONFIG.database_url)
             self.persistence = PersistenceManager(session_factory)
+        self._active_brief: CreativeBrief | None = None
 
     def _brand_style_from_images(self, brief: CreativeBrief) -> BrandStyle:
         prompt = (
@@ -57,11 +58,12 @@ class FlyerPipeline:
         return BrandStyle(**data)
 
     def _brand_style_from_text(self, brief: CreativeBrief) -> BrandStyle:
+        business_name = self._business_name(brief)
         prompt = (
             "You are a brand designer. Given the business description, return JSON with keys: "
             "palette (array of color names), style_keywords (array), layout_guidance (string), "
             "typography_guidance (string). Return JSON only. "
-            f"Business: {brief.business_name}. Product: {brief.product}. Offer: {brief.offer}. "
+            f"Business: {business_name}. Product: {brief.product}. Offer: {brief.offer}. "
             f"Tone: {brief.tone}. Audience: {brief.audience or 'local households'}."
         )
         data = chat_json(
@@ -131,11 +133,12 @@ class FlyerPipeline:
         needed = target_count - len(variants)
         if needed <= 0:
             return variants
+        business_name = self._business_name(brief)
         prompt = (
             "Generate additional flyer copy variants as JSON array with keys: "
             "headline, subhead, body, cta, disclaimer. "
             f"Return exactly {needed} variants. "
-            f"Business: {brief.business_name}. Product: {brief.product}. Offer: {brief.offer}. "
+            f"Business: {business_name}. Product: {brief.product}. Offer: {brief.offer}. "
             f"Tone: {brief.tone}. Style: {', '.join(style.style_keywords)}."
         )
         data = chat_json(
@@ -151,12 +154,13 @@ class FlyerPipeline:
     ) -> CopyVariant:
         if self._within_constraints(variant):
             return variant
+        business_name = self._business_name(brief)
         prompt = (
             "Rewrite the flyer copy to fit the strict length constraints. "
             "Return JSON with keys: headline, subhead, body, cta, disclaimer. "
             "Constraints: headline <= 6 words, subhead <= 10 words, body <= 28 words, "
             "cta <= 4 words, disclaimer <= 12 words. "
-            f"Business: {brief.business_name}. Product: {brief.product}. Offer: {brief.offer}. "
+            f"Business: {business_name}. Product: {brief.product}. Offer: {brief.offer}. "
             f"Tone: {brief.tone}. Style: {', '.join(style.style_keywords)}. "
             "Original copy:\n"
             + json.dumps(variant.model_dump(), indent=2)
@@ -269,6 +273,8 @@ class FlyerPipeline:
                         pkg.copy_variant.cta,
                         pkg.copy_variant.disclaimer or "",
                     ]
+                    required = self._required_details(self._active_brief)
+                    expected.extend(required)
                     qc_passed = validate_text(expected, qc_text)
                 if qc_passed:
                     break
@@ -292,6 +298,7 @@ class FlyerPipeline:
         return variants
 
     def run(self, brief: CreativeBrief) -> RunResult:
+        self._active_brief = brief
         run_record = None
         model_versions = {
             "text_model": self.text_model,
@@ -328,3 +335,75 @@ class FlyerPipeline:
             if self.persistence and run_record:
                 self.persistence.update_run_status(run_record.id, "FAILED", str(exc))
             raise
+        finally:
+            self._active_brief = None
+
+    def _required_details(self, brief: CreativeBrief | None) -> list[str]:
+        if not brief:
+            return []
+        required: list[str] = []
+        if brief.constraints:
+            required.extend(self._extract_required_from_constraints(brief.constraints))
+        details = brief.business_details
+        if not details:
+            return required
+        hours_text = ""
+        if details.hours:
+            if details.hours.display:
+                hours_text = details.hours.display
+            else:
+                hours_parts: list[str] = []
+                for day in details.hours.weekly:
+                    if day.closed:
+                        hours_parts.append(f\"{day.day} closed\")
+                        continue
+                    if day.open and day.close:
+                        hours_parts.append(f\"{day.day} {day.open}-{day.close}\")
+                    elif day.open:
+                        hours_parts.append(f\"{day.day} {day.open}\")
+                if details.hours.notes:
+                    hours_parts.append(details.hours.notes)
+                hours_text = \"; \".join(hours_parts)
+        for value in [
+            details.name,
+            details.address,
+            details.city,
+            details.state,
+            details.postal_code,
+            details.phone,
+            details.website,
+            hours_text,
+            details.service_area,
+        ]:
+            if value:
+                required.append(value)
+        return required
+
+    def _extract_required_from_constraints(self, constraints: list[str]) -> list[str]:
+        required: list[str] = []
+        for item in constraints:
+            text = item.strip()
+            if not text:
+                continue
+            lower = text.lower()
+            if "include" not in lower:
+                continue
+            if "'" in text:
+                parts = text.split("'")
+                for idx in range(1, len(parts), 2):
+                    phrase = parts[idx].strip()
+                    if phrase:
+                        required.append(phrase)
+                continue
+            if ":" in text:
+                _, value = text.split(":", 1)
+                value = value.strip()
+                if value:
+                    required.append(value)
+                continue
+        return required
+
+    def _business_name(self, brief: CreativeBrief) -> str:
+        if brief.business_details and brief.business_details.name:
+            return brief.business_details.name
+        return "Unknown Business"
