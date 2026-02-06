@@ -9,13 +9,21 @@ Hyperlocal is a flyer-generation pipeline that uses:
 
 ## Conventions
 - Use `uv` for Python dependencies and execution.
-- Use Postgres + SQL schema from `sql/schema.sql` (Option B).
+- Use Postgres + SQL schema from `backend/sql/schema.sql` (Option B).
 - Avoid absolute paths in commands; assume repo root.
 - Keep generated images out of git; they go under `output/`.
 
 ## Setup
 ```bash
+cd backend
 uv sync
+```
+
+## Frontend
+```bash
+cd web
+npm install
+npm run dev
 ```
 
 ## Local Infrastructure
@@ -25,7 +33,7 @@ docker compose up -d
 
 ## Database (Option B)
 ```bash
-psql "$DATABASE_URL" -f sql/schema.sql
+psql "$DATABASE_URL" -f backend/sql/schema.sql
 ```
 
 ## Run Flyer Generation
@@ -34,7 +42,7 @@ uv run scripts/generate_flyer.py
 ```
 
 ## Environment
-Use `.env` (see `.env.example`) and set at minimum:
+Use `.env` (see `backend/.env.example`) and set at minimum:
 - `OPENAI_API_KEY`
 - `DATABASE_URL`
 

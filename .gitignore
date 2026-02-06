@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 output/
 .env
+node_modules/
+.next/
+out/
+web/.env*

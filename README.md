@@ -8,6 +8,7 @@ Hyperlocal is a flyer-generation pipeline that combines:
 
 ## Quick Start
 ```bash
+cd backend
 uv sync
 ```
 
@@ -16,13 +17,20 @@ docker compose up -d
 ```
 
 ```bash
-psql "$DATABASE_URL" -f sql/schema.sql
+psql "$DATABASE_URL" -f backend/sql/schema.sql
 ```
 
 ```bash
 uv run scripts/generate_flyer.py
 ```
 
+## Frontend
+```bash
+cd web
+npm install
+npm run dev
+```
+
 ## Notes
-- Configure `.env` from `.env.example`.
+- Configure `.env` from `backend/.env.example`.
 - Persistence and storage are optional and controlled by env flags.

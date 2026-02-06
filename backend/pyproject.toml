@@ -5,6 +5,7 @@ description = "Hyperlocal flyer generation pipeline"
 requires-python = ">=3.12"
 dependencies = [
     "boto3>=1.34.0",
+    "fastapi>=0.115.0",
     "httpx>=0.27.0",
     "openai>=1.40.0",
     "psycopg[binary]>=3.2.0",
@@ -12,4 +13,5 @@ dependencies = [
     "python-dotenv>=1.0.1",
     "sqlalchemy>=2.0.30",
     "tenacity>=8.2.3",
+    "uvicorn[standard]>=0.30.0",
 ]
