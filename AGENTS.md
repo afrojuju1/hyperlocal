@@ -35,6 +35,8 @@ docker compose up -d
 - Postgres: `55432`
 - Redis: `16379`
 - MinIO: `19000` (API), `19001` (console)
+- Backend API: `18000`
+- Frontend: `13000`
 
 ## Database (Option B)
 ```bash

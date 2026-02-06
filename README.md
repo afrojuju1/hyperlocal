@@ -12,8 +12,9 @@ cd backend
 uv sync
 ```
 
+## Containers
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
 ```bash
@@ -35,6 +36,8 @@ bun run dev
 - Postgres: `55432`
 - Redis: `16379`
 - MinIO: `19000` (API), `19001` (console)
+- Backend API: `18000`
+- Frontend: `13000`
 
 ## Notes
 - Configure `.env` from `backend/.env.example`.
