@@ -2,9 +2,9 @@
 
 Hyperlocal is a flyer-generation pipeline that combines:
 - Local Ollama (OpenAI-compatible) for text + vision
-- OpenAI image generation for final flyer images
+- Local SDXL for final flyer images
 - Postgres for persistence
-- S3-compatible object storage for assets
+- On-disk output storage under `output/`
 
 ## Quick Start
 ```bash
@@ -35,13 +35,12 @@ bun run dev
 ## Ports (Docker)
 - Postgres: `55432`
 - Redis: `16379`
-- MinIO: `19000` (API), `19001` (console)
 - Backend API: `18000`
 - Frontend: `13000`
 
 ## Notes
 - Configure `.env` from `backend/.env.example`.
-- Persistence and storage are optional and controlled by env flags.
+- Persistence is optional and controlled by env flags.
 - Image generation defaults to local SDXL (via a running SDXL WebUI/Comfy endpoint).
 
 ## Local SDXL
