@@ -11,7 +11,8 @@ services:
       HYPERLOCAL_PERSIST_ENABLED: "1"
       HYPERLOCAL_STORAGE_ENABLED: "0"
       OLLAMA_BASE_URL: http://host.docker.internal:11434/v1
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      HYPERLOCAL_IMAGE_PROVIDER: sdxl
+      SDXL_API_URL: http://host.docker.internal:7860/sdapi/v1/txt2img
     ports:
       - "18000:8000"
     depends_on:

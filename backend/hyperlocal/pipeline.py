@@ -11,6 +11,7 @@ from hyperlocal.openai_helpers import (
     generate_image,
     image_url_from_path,
 )
+from hyperlocal.image_providers import build_sdxl_config, generate_sdxl_image
 from hyperlocal.prompt_templates import copy_prompt, image_prompt, negative_prompt
 from hyperlocal.qc import extract_text, validate_text
 from hyperlocal.persistence import PersistenceManager
@@ -25,9 +26,19 @@ class FlyerPipeline:
             base_url=RUNTIME_CONFIG.ollama_base_url,
             api_key=RUNTIME_CONFIG.ollama_api_key,
         )
-        if not RUNTIME_CONFIG.openai_api_key:
-            raise RuntimeError("OPENAI_API_KEY is not set")
-        self.remote_client = build_client(api_key=RUNTIME_CONFIG.openai_api_key)
+        self.image_provider = RUNTIME_CONFIG.image_provider.lower()
+        self.remote_client = None
+        if self.image_provider == "openai":
+            if not RUNTIME_CONFIG.openai_api_key:
+                raise RuntimeError("OPENAI_API_KEY is not set")
+            self.remote_client = build_client(api_key=RUNTIME_CONFIG.openai_api_key)
+        self.sdxl_config = build_sdxl_config(
+            api_url=RUNTIME_CONFIG.sdxl_api_url,
+            size=RUNTIME_CONFIG.image_size,
+            steps=RUNTIME_CONFIG.sdxl_steps,
+            cfg_scale=RUNTIME_CONFIG.sdxl_cfg_scale,
+            sampler=RUNTIME_CONFIG.sdxl_sampler,
+        )
         self.text_model = MODEL_CONFIG.text_model
         self.vision_model = MODEL_CONFIG.vision_model
         self.storage = build_storage()
@@ -249,18 +260,28 @@ class FlyerPipeline:
             qc_passed = False
             qc_text = ""
             for attempt in range(1, RUNTIME_CONFIG.max_image_attempts + 1):
-                generate_image(
-                    client=self.remote_client,
-                    prompt=(
-                        pkg.image_prompt
-                        + "\n\nNegative constraints: "
-                        + pkg.negative_prompt
-                    ),
-                    output_path=image_path,
-                    model=RUNTIME_CONFIG.image_model,
-                    size=RUNTIME_CONFIG.image_size,
-                    quality=RUNTIME_CONFIG.image_quality,
-                )
+                if self.image_provider == "openai":
+                    generate_image(
+                        client=self.remote_client,
+                        prompt=(
+                            pkg.image_prompt
+                            + "\n\nNegative constraints: "
+                            + pkg.negative_prompt
+                        ),
+                        output_path=image_path,
+                        model=RUNTIME_CONFIG.image_model,
+                        size=RUNTIME_CONFIG.image_size,
+                        quality=RUNTIME_CONFIG.image_quality,
+                    )
+                elif self.image_provider == "sdxl":
+                    generate_sdxl_image(
+                        prompt=pkg.image_prompt,
+                        negative_prompt=pkg.negative_prompt,
+                        output_path=image_path,
+                        config=self.sdxl_config,
+                    )
+                else:
+                    raise RuntimeError(f"Unknown image provider: {self.image_provider}")
                 if not RUNTIME_CONFIG.qc_enabled:
                     qc_passed = True
                     qc_text = "qc disabled"

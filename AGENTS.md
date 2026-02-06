@@ -50,12 +50,16 @@ uv run scripts/generate_flyer.py
 
 ## Environment
 Use `.env` (see `backend/.env.example`) and set at minimum:
-- `OPENAI_API_KEY`
 - `DATABASE_URL`
+ - `SDXL_API_URL` (if using local SDXL)
 
 Optional (S3/MinIO uploads):
 - `HYPERLOCAL_STORAGE_ENABLED=1`
 - `S3_ENDPOINT_URL`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`, `S3_PUBLIC_BASE_URL`
+
+## Image Generation
+- Default provider is local SDXL via `SDXL_API_URL`.
+- To use OpenAI images, set `HYPERLOCAL_IMAGE_PROVIDER=openai` and `OPENAI_API_KEY`.
 
 ## Persistence Flow
 - `creative_runs` stores the run + brief + model versions

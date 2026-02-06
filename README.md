@@ -42,3 +42,10 @@ bun run dev
 ## Notes
 - Configure `.env` from `backend/.env.example`.
 - Persistence and storage are optional and controlled by env flags.
+- Image generation defaults to local SDXL (via a running SDXL WebUI/Comfy endpoint).
+
+## Local SDXL
+Run a local SDXL endpoint (e.g. Automatic1111) and set:
+```bash
+SDXL_API_URL=http://localhost:7860/sdapi/v1/txt2img
+```
