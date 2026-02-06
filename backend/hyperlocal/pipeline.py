@@ -376,15 +376,15 @@ class FlyerPipeline:
                 hours_parts: list[str] = []
                 for day in details.hours.weekly:
                     if day.closed:
-                        hours_parts.append(f\"{day.day} closed\")
+                        hours_parts.append(f"{day.day} closed")
                         continue
                     if day.open and day.close:
-                        hours_parts.append(f\"{day.day} {day.open}-{day.close}\")
+                        hours_parts.append(f"{day.day} {day.open}-{day.close}")
                     elif day.open:
-                        hours_parts.append(f\"{day.day} {day.open}\")
+                        hours_parts.append(f"{day.day} {day.open}")
                 if details.hours.notes:
                     hours_parts.append(details.hours.notes)
-                hours_text = \"; \".join(hours_parts)
+                hours_text = "; ".join(hours_parts)
         for value in [
             details.name,
             details.address,
