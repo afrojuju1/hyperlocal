@@ -31,6 +31,11 @@ bun run dev
 docker compose up -d
 ```
 
+## Ports (Docker)
+- Postgres: `55432`
+- Redis: `16379`
+- MinIO: `19000` (API), `19001` (console)
+
 ## Database (Option B)
 ```bash
 psql "$DATABASE_URL" -f backend/sql/schema.sql

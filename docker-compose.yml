@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: hyperlocal
       POSTGRES_DB: hyperlocal
     ports:
-      - "5432:5432"
+      - "55432:5432"
     volumes:
       - hyperlocal_pgdata:/var/lib/postgresql/data
 
@@ -17,7 +17,7 @@ services:
     image: redis:7
     container_name: hyperlocal-redis
     ports:
-      - "6379:6379"
+      - "16379:6379"
 
   minio:
     image: minio/minio:latest
@@ -27,8 +27,8 @@ services:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio123
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "19000:9000"
+      - "19001:9001"
     volumes:
       - hyperlocal_minio:/data
 

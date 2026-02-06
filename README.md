@@ -31,6 +31,11 @@ bun install
 bun run dev
 ```
 
+## Ports (Docker)
+- Postgres: `55432`
+- Redis: `16379`
+- MinIO: `19000` (API), `19001` (console)
+
 ## Notes
 - Configure `.env` from `backend/.env.example`.
 - Persistence and storage are optional and controlled by env flags.
