@@ -7,3 +7,5 @@ node_modules/
 .next/
 out/
 web/.env*
+sdxl/*
+!sdxl/README.md

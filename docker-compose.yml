@@ -12,12 +12,13 @@ services:
       HYPERLOCAL_STORAGE_ENABLED: "0"
       OLLAMA_BASE_URL: http://host.docker.internal:11434/v1
       HYPERLOCAL_IMAGE_PROVIDER: sdxl
-      SDXL_API_URL: http://host.docker.internal:7860/sdapi/v1/txt2img
+      SDXL_API_URL: http://sdxl:7860/sdapi/v1/txt2img
     ports:
       - "18000:8000"
     depends_on:
       - db
       - redis
+      - sdxl
 
   web:
     build:
@@ -48,6 +49,16 @@ services:
     container_name: hyperlocal-redis
     ports:
       - "16379:6379"
+
+  sdxl:
+    image: zhiqiangwang/stable-diffusion-webui:latest
+    container_name: hyperlocal-sdxl
+    environment:
+      CLI_ARGS: "--api --listen --port 7860 --skip-torch-cuda-test --use-cpu all"
+    ports:
+      - "17860:7860"
+    volumes:
+      - ./sdxl:/sd/stable-diffusion-webui
 
   minio:
     image: minio/minio:latest

@@ -45,7 +45,13 @@ bun run dev
 - Image generation defaults to local SDXL (via a running SDXL WebUI/Comfy endpoint).
 
 ## Local SDXL
-Run a local SDXL endpoint (e.g. Automatic1111) and set:
+Use the bundled SDXL WebUI container:
 ```bash
-SDXL_API_URL=http://localhost:7860/sdapi/v1/txt2img
+docker compose up -d sdxl
+```
+Place your model file at `sdxl/models/Stable-diffusion/` (see `sdxl/README.md`).
+
+If you run the backend outside Docker, point it to the host port:
+```bash
+SDXL_API_URL=http://localhost:17860/sdapi/v1/txt2img
 ```
