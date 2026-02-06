@@ -22,8 +22,8 @@ uv sync
 ## Frontend
 ```bash
 cd web
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 ## Local Infrastructure

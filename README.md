@@ -27,8 +27,8 @@ uv run scripts/generate_flyer.py
 ## Frontend
 ```bash
 cd web
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 ## Notes
