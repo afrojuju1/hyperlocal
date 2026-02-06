@@ -12,6 +12,14 @@ def build_engine(database_url: str | None = None):
     return create_engine(url, pool_pre_ping=True)
 
 
+def init_db(database_url: str | None = None):
+    engine = build_engine(database_url)
+    from hyperlocal.models import Base
+
+    Base.metadata.create_all(engine)
+    return engine
+
+
 def build_sessionmaker(database_url: str | None = None):
     engine = build_engine(database_url)
     return sessionmaker(bind=engine, autoflush=False, autocommit=False)

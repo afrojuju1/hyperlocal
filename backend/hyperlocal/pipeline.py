@@ -16,7 +16,7 @@ from hyperlocal.prompt_templates import copy_prompt, image_prompt, negative_prom
 from hyperlocal.qc import extract_text, validate_text
 from hyperlocal.persistence import PersistenceManager
 from hyperlocal.storage import build_storage, key_for_image
-from hyperlocal.db import build_sessionmaker
+from hyperlocal.db import build_sessionmaker, init_db
 from hyperlocal.schemas import BrandStyle, CopyVariant, CreativeBrief, ImageVariant, PromptPackage, RunResult
 
 
@@ -44,6 +44,7 @@ class FlyerPipeline:
         self.storage = build_storage()
         self.persistence = None
         if RUNTIME_CONFIG.persist_enabled and RUNTIME_CONFIG.database_url:
+            init_db(RUNTIME_CONFIG.database_url)
             session_factory = build_sessionmaker(RUNTIME_CONFIG.database_url)
             self.persistence = PersistenceManager(session_factory)
         self._active_brief: CreativeBrief | None = None
