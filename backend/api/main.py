@@ -8,6 +8,9 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 from api.routes.generate import router as generate_router
+from hyperlocal.config import RUNTIME_CONFIG
+from hyperlocal.db import build_engine
+from hyperlocal.models import Base
 
 app = FastAPI(title="Hyperlocal API")
 
@@ -31,6 +34,13 @@ app.add_middleware(
 app.include_router(generate_router)
 
 app.mount("/files", StaticFiles(directory=output_dir), name="files")
+
+
+@app.on_event("startup")
+async def startup_event() -> None:
+    if RUNTIME_CONFIG.persist_enabled and RUNTIME_CONFIG.database_url:
+        engine = build_engine(RUNTIME_CONFIG.database_url)
+        Base.metadata.create_all(engine)
 
 
 @app.get("/health")
