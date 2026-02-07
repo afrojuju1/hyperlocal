@@ -11,7 +11,12 @@ from hyperlocal.openai_helpers import (
     generate_image,
     image_url_from_path,
 )
-from hyperlocal.image_providers import build_sdxl_config, generate_sdxl_image
+from hyperlocal.image_providers import (
+    build_ollama_image_config,
+    build_sdxl_config,
+    generate_ollama_image,
+    generate_sdxl_image,
+)
 from hyperlocal.comfyui_provider import build_comfyui_config, generate_comfyui_image
 
 from hyperlocal.llm_providers import build_llm_clients
@@ -51,6 +56,10 @@ class FlyerPipeline:
             steps=RUNTIME_CONFIG.sdxl_steps,
             cfg_scale=RUNTIME_CONFIG.sdxl_cfg_scale,
             sampler=RUNTIME_CONFIG.sdxl_sampler,
+        )
+        self.ollama_image_config = build_ollama_image_config(
+            model=RUNTIME_CONFIG.ollama_image_model,
+            timeout=RUNTIME_CONFIG.ollama_image_timeout,
         )
         self.comfyui_config = build_comfyui_config(
             api_url=RUNTIME_CONFIG.comfyui_api_url,
@@ -358,6 +367,15 @@ class FlyerPipeline:
                         brief=brief,
                         style=style,
                         copy=pkg.copy_variant,
+                    )
+                elif self.image_provider == "ollama":
+                    prompt = pkg.image_prompt
+                    if pkg.negative_prompt:
+                        prompt = f"{prompt}\n\nNegative constraints: {pkg.negative_prompt}"
+                    generate_ollama_image(
+                        prompt=prompt,
+                        output_path=image_path,
+                        config=self.ollama_image_config,
                     )
                 else:
                     raise RuntimeError(f"Unknown image provider: {self.image_provider}")

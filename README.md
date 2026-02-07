@@ -2,7 +2,7 @@
 
 Hyperlocal is a flyer-generation pipeline that combines:
 - Local vLLM-MLX (OpenAI-compatible) for text + vision
-- Local SDXL for final flyer images
+- Ollama for final flyer images (default)
 - Postgres for persistence
 - On-disk output storage under `output/`
 
@@ -41,7 +41,7 @@ bun run dev
 ## Notes
 - Configure `.env` from `backend/.env.example`.
 - Persistence is optional and controlled by env flags.
-- Image generation defaults to local SDXL (via a running SDXL WebUI/Comfy endpoint).
+- Image generation defaults to Ollama.
 
 ## Local LLM (vllm-mlx)
 Install and run the local LLM server:
@@ -59,7 +59,7 @@ HYPERLOCAL_TEXT_MODEL=default
 HYPERLOCAL_VISION_MODEL=default
 ```
 
-## Local SDXL
+## Local SDXL (Optional)
 Run the local SDXL server:
 ```bash
 cd sdxl
@@ -69,7 +69,17 @@ uv run uvicorn server:app --host 0.0.0.0 --port 17860
 
 If you run the backend outside Docker, point it to the host port:
 ```bash
+HYPERLOCAL_IMAGE_PROVIDER=sdxl
 SDXL_API_URL=http://localhost:17860/sdapi/v1/txt2img
+```
+
+## Ollama Image Generation (Default)
+Ollama image generation uses the local `ollama` CLI.
+
+Set the backend to use Ollama:
+```bash
+HYPERLOCAL_IMAGE_PROVIDER=ollama
+OLLAMA_IMAGE_MODEL=x/z-image-turbo
 ```
 
 ## ComfyUI (Full Flyer Image)

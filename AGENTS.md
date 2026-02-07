@@ -3,7 +3,7 @@
 ## Project Summary
 Hyperlocal is a flyer-generation pipeline that uses:
 - Local vLLM-MLX (OpenAI-compatible) for text + vision
-- Local SDXL for the final flyer image
+- Ollama for the final flyer image (default)
 - Postgres for persistence
 - On-disk output storage under `output/`
 
@@ -51,9 +51,11 @@ uv run scripts/generate_flyer.py
 Use `.env` (see `backend/.env.example`) and set at minimum:
 - `DATABASE_URL`
 - `SDXL_API_URL` (if using local SDXL, Docker host port defaults to 17860)
+- `OLLAMA_IMAGE_MODEL` (if using Ollama image generation, e.g. `x/z-image-turbo`)
 
 ## Image Generation
-- Default provider is local SDXL via `SDXL_API_URL` (run the local server in `sdxl/` on port `17860`).
+- Default provider is Ollama via `HYPERLOCAL_IMAGE_PROVIDER=ollama` and `OLLAMA_IMAGE_MODEL`.
+- To use SDXL, set `HYPERLOCAL_IMAGE_PROVIDER=sdxl` and `SDXL_API_URL` (run the local server in `sdxl/` on port `17860`).
 - To use OpenAI images, set `HYPERLOCAL_IMAGE_PROVIDER=openai` and `OPENAI_API_KEY`.
 
 ## Persistence Flow

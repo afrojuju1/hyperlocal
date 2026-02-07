@@ -23,7 +23,7 @@ Acre is a distributed asynchronous platform designed to bridge cloud-based geosp
 * **Backend:** Python 3.12+ / FastAPI.
 * **Task Orchestration:** `arq` (Redis-backed, native `asyncio`).
 * **Geospatial DB:** PostgreSQL 16 + **PostGIS 3.4**.
-* **Intelligence:** Llama 3.1 8B (via `mlx-lm`) + Stable Diffusion XL Turbo (local).
+* **Intelligence:** Llama 3.1 8B (via `mlx-lm`) + Ollama image generation (local, default).
 * **PDF Engine:** `Typst` (Rust-based) for millisecond PDF compilation.
 
 ---
@@ -43,7 +43,7 @@ Triggered by an `arq` worker when a user requests "Generate Design."
 
 1. **Context Scraper:** Pulls brand colors/logos from the user's URL.
 2. **MLX Inference:** Local Llama 3.1 generates 3 variations of high-conversion ad copy.
-3. **Image Synthesis:** Local SDXL-Turbo generates background assets.
+3. **Image Synthesis:** Ollama image generation produces background assets (SDXL optional).
 4. **Zero-Cost:** By running compute on local Apple Silicon, Acre eliminates OpenAI/Anthropic API overhead.
 
 ### C. The Fulfillment Node (Local Agent)
