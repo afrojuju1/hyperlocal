@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 output/
+logs/
 .env
 node_modules/
 .next/
@@ -9,3 +10,7 @@ out/
 web/.env*
 sdxl/*
 !sdxl/README.md
+comfyui/ComfyUI/
+!comfyui/ComfyUI/custom_nodes/
+!comfyui/ComfyUI/custom_nodes/hyperlocal_layout/
+!comfyui/ComfyUI/custom_nodes/hyperlocal_layout/**

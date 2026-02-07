@@ -27,6 +27,12 @@ class RuntimeConfig:
     image_model: str = os.getenv("HYPERLOCAL_IMAGE_MODEL", "gpt-image-1")
     image_size: str = os.getenv("HYPERLOCAL_IMAGE_SIZE", "1024x1536")  # 6x9 aspect
     image_quality: str = os.getenv("HYPERLOCAL_IMAGE_QUALITY", "high")
+    comfyui_api_url: str = os.getenv("COMFYUI_API_URL", "http://localhost:8188")
+    comfyui_workflow_path: str = os.getenv(
+        "COMFYUI_WORKFLOW_PATH", "comfyui/workflows/flyer_full.json"
+    )
+    comfyui_timeout: float = float(os.getenv("COMFYUI_TIMEOUT", "600"))
+    comfyui_output_node: str | None = os.getenv("COMFYUI_OUTPUT_NODE")
     sdxl_api_url: str = os.getenv(
         "SDXL_API_URL", "http://host.docker.internal:7860/sdapi/v1/txt2img"
     )

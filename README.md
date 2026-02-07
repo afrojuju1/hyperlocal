@@ -71,3 +71,30 @@ If you run the backend outside Docker, point it to the host port:
 ```bash
 SDXL_API_URL=http://localhost:17860/sdapi/v1/txt2img
 ```
+
+## ComfyUI (Full Flyer Image)
+ComfyUI generates the final flyer image directly (no Typst overlay). Recommended port: `8188`.
+
+1. Install and run ComfyUI on a free port (example `8188`).
+2. Build a workflow that:
+   - Generates a background image from a prompt/negative prompt
+   - Renders text blocks (headline, subhead, body, CTA, disclaimer, business block, audience)
+   - Composites them into a final 6x9 image
+3. Export the workflow JSON and place it at `comfyui/workflows/flyer_full.json`.
+4. If your workflow has multiple outputs, set `COMFYUI_OUTPUT_NODE` to the node id that writes the final image.
+
+Set the backend to use ComfyUI:
+```bash
+HYPERLOCAL_IMAGE_PROVIDER=comfyui
+COMFYUI_API_URL=http://localhost:8188
+COMFYUI_WORKFLOW_PATH=comfyui/workflows/flyer_full.json
+COMFYUI_OUTPUT_NODE=
+```
+
+Workflow placeholders (use these tokens in the JSON):
+- `{{PROMPT}}`, `{{NEGATIVE_PROMPT}}`
+- `{{WIDTH}}`, `{{HEIGHT}}`
+- `{{HEADLINE}}`, `{{SUBHEAD}}`, `{{BODY}}`, `{{CTA}}`, `{{DISCLAIMER}}`
+- `{{BUSINESS_BLOCK}}`, `{{AUDIENCE}}`
+- `{{PALETTE}}`, `{{STYLE_KEYWORDS}}`, `{{LAYOUT_GUIDANCE}}`
+- `{{BUSINESS_NAME}}`, `{{PRODUCT}}`, `{{OFFER}}`, `{{CONSTRAINTS}}`

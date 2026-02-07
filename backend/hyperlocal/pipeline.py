@@ -5,13 +5,24 @@ import time
 from pathlib import Path
 
 from hyperlocal.config import RUNTIME_CONFIG
-from hyperlocal.openai_helpers import chat_json, generate_image, image_url_from_path
+from hyperlocal.openai_helpers import (
+    build_client,
+    chat_json,
+    generate_image,
+    image_url_from_path,
+)
 from hyperlocal.image_providers import build_sdxl_config, generate_sdxl_image
-from PIL import Image
+from hyperlocal.comfyui_provider import build_comfyui_config, generate_comfyui_image
 
 from hyperlocal.llm_providers import build_llm_clients
-from hyperlocal.prompt_templates import copy_prompt, background_prompt, negative_prompt
-from hyperlocal.typst_renderer import render_typst_overlay
+from hyperlocal.prompt_templates import (
+    copy_prompt,
+    background_prompt,
+    comfyui_background_prompt,
+    flyer_prompt,
+    negative_prompt,
+    negative_prompt_full,
+)
 from hyperlocal.qc import extract_text, validate_text
 from hyperlocal.persistence import PersistenceManager
 from hyperlocal.storage import build_storage, key_for_image
@@ -40,6 +51,13 @@ class FlyerPipeline:
             steps=RUNTIME_CONFIG.sdxl_steps,
             cfg_scale=RUNTIME_CONFIG.sdxl_cfg_scale,
             sampler=RUNTIME_CONFIG.sdxl_sampler,
+        )
+        self.comfyui_config = build_comfyui_config(
+            api_url=RUNTIME_CONFIG.comfyui_api_url,
+            workflow_path=RUNTIME_CONFIG.comfyui_workflow_path,
+            size=RUNTIME_CONFIG.image_size,
+            timeout=RUNTIME_CONFIG.comfyui_timeout,
+            output_node=RUNTIME_CONFIG.comfyui_output_node,
         )
         self.text_model = llm_clients.text_model
         self.vision_model = llm_clients.vision_model
@@ -270,26 +288,21 @@ class FlyerPipeline:
         self, brief: CreativeBrief, style: BrandStyle, variants: list[CopyVariant]
     ) -> list[PromptPackage]:
         packages = []
-        neg = negative_prompt()
+        if self.image_provider == "comfyui":
+            prompt_fn = comfyui_background_prompt
+            neg = negative_prompt()
+        else:
+            prompt_fn = flyer_prompt
+            neg = negative_prompt_full()
         for variant in variants:
             packages.append(
                 PromptPackage(
-                    image_prompt=background_prompt(brief, style, variant),
+                    image_prompt=prompt_fn(brief, style, variant),
                     negative_prompt=neg,
                     copy_variant=variant,
                 )
             )
         return packages
-
-    def _compose_with_overlay(
-        self, *, background_path: str, overlay_path: str, output_path: str
-    ) -> None:
-        background = Image.open(background_path).convert("RGBA")
-        overlay = Image.open(overlay_path).convert("RGBA")
-        if overlay.size != background.size:
-            overlay = overlay.resize(background.size, resample=Image.LANCZOS)
-        composed = Image.alpha_composite(background, overlay)
-        composed.save(output_path)
 
     def generate_images(
         self,
@@ -303,8 +316,6 @@ class FlyerPipeline:
         variants: list[ImageVariant] = []
         for idx, pkg in enumerate(packages, start=1):
             image_path = str(Path(run_dir) / f"variant_{idx:02d}.png")
-            background_path = str(Path(run_dir) / f"variant_{idx:02d}_bg.png")
-            overlay_path = str(Path(run_dir) / f"variant_{idx:02d}_overlay.png")
             variant_id = None
             if self.persistence and run_id is not None:
                 record = self.persistence.create_variant(
@@ -317,15 +328,6 @@ class FlyerPipeline:
                 variant_id = record.id
             qc_passed = False
             qc_text = ""
-            render_typst_overlay(
-                brief=brief,
-                style=style,
-                copy=pkg.copy_variant,
-                output_path=overlay_path,
-                size=brief.size,
-                pixel_size=RUNTIME_CONFIG.image_size,
-                typst_bin=RUNTIME_CONFIG.typst_bin,
-            )
             for attempt in range(1, RUNTIME_CONFIG.max_image_attempts + 1):
                 if self.image_provider == "openai":
                     generate_image(
@@ -335,7 +337,7 @@ class FlyerPipeline:
                             + "\n\nNegative constraints: "
                             + pkg.negative_prompt
                         ),
-                        output_path=background_path,
+                        output_path=image_path,
                         model=RUNTIME_CONFIG.image_model,
                         size=RUNTIME_CONFIG.image_size,
                         quality=RUNTIME_CONFIG.image_quality,
@@ -344,16 +346,21 @@ class FlyerPipeline:
                     generate_sdxl_image(
                         prompt=pkg.image_prompt,
                         negative_prompt=pkg.negative_prompt,
-                        output_path=background_path,
+                        output_path=image_path,
                         config=self.sdxl_config,
+                    )
+                elif self.image_provider == "comfyui":
+                    generate_comfyui_image(
+                        prompt=pkg.image_prompt,
+                        negative_prompt=pkg.negative_prompt,
+                        output_path=image_path,
+                        config=self.comfyui_config,
+                        brief=brief,
+                        style=style,
+                        copy=pkg.copy_variant,
                     )
                 else:
                     raise RuntimeError(f"Unknown image provider: {self.image_provider}")
-                self._compose_with_overlay(
-                    background_path=background_path,
-                    overlay_path=overlay_path,
-                    output_path=image_path,
-                )
                 if not RUNTIME_CONFIG.qc_enabled:
                     qc_passed = True
                     qc_text = "qc disabled"
