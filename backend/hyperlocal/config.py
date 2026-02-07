@@ -27,7 +27,7 @@ class RuntimeConfig:
     image_model: str = os.getenv("HYPERLOCAL_IMAGE_MODEL", "gpt-image-1")
     image_size: str = os.getenv("HYPERLOCAL_IMAGE_SIZE", "1024x1536")  # 6x9 aspect
     image_quality: str = os.getenv("HYPERLOCAL_IMAGE_QUALITY", "high")
-    ollama_image_model: str = os.getenv("OLLAMA_IMAGE_MODEL", "x/z-image-turbo")
+    ollama_image_model: str = os.getenv("OLLAMA_IMAGE_MODEL", "x/flux2-klein")
     ollama_image_timeout: float = float(os.getenv("OLLAMA_IMAGE_TIMEOUT", "600"))
     comfyui_api_url: str = os.getenv("COMFYUI_API_URL", "http://localhost:8188")
     comfyui_workflow_path: str = os.getenv(

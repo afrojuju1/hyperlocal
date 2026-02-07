@@ -51,7 +51,7 @@ uv run scripts/generate_flyer.py
 Use `.env` (see `backend/.env.example`) and set at minimum:
 - `DATABASE_URL`
 - `SDXL_API_URL` (if using local SDXL, Docker host port defaults to 17860)
-- `OLLAMA_IMAGE_MODEL` (if using Ollama image generation, e.g. `x/z-image-turbo`)
+- `OLLAMA_IMAGE_MODEL` (if using Ollama image generation, e.g. `x/flux2-klein`)
 
 ## Image Generation
 - Default provider is Ollama via `HYPERLOCAL_IMAGE_PROVIDER=ollama` and `OLLAMA_IMAGE_MODEL`.

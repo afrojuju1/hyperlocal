@@ -79,7 +79,7 @@ Ollama image generation uses the local `ollama` CLI.
 Set the backend to use Ollama:
 ```bash
 HYPERLOCAL_IMAGE_PROVIDER=ollama
-OLLAMA_IMAGE_MODEL=x/z-image-turbo
+OLLAMA_IMAGE_MODEL=x/flux2-klein
 ```
 
 ## ComfyUI (Full Flyer Image)
