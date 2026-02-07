@@ -10,6 +10,7 @@ from pathlib import Path
 from api.routes.generate import router as generate_router
 from hyperlocal.config import RUNTIME_CONFIG
 from hyperlocal.db import init_db
+from hyperlocal.health import run_health_checks
 
 app = FastAPI(title="Hyperlocal API")
 
@@ -44,3 +45,8 @@ async def startup_event() -> None:
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok"}
+
+
+@app.get("/healthz")
+async def healthz() -> dict:
+    return run_health_checks()

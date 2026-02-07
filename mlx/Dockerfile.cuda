@@ -1,0 +1,24 @@
+FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        software-properties-common \
+        ca-certificates \
+        gnupg \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        python3.12 \
+        python3.12-venv \
+        python3.12-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3.12 -m ensurepip --upgrade \
+    && python3.12 -m pip install --no-cache-dir --upgrade pip
+RUN python3.12 -m pip install --no-cache-dir "mlx[cuda12]" mlx-openai-server
+
+EXPOSE 8000
+
+CMD ["sh", "-c", "mlx-openai-server launch --model-type ${MLX_MODEL_TYPE:-image-generation} --model-path ${MLX_MODEL_PATH:-/models/flux} --config-name ${MLX_CONFIG_NAME:-flux-krea-dev} --port ${MLX_PORT:-8000}"]

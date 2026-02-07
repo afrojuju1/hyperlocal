@@ -1,7 +1,7 @@
 # Hyperlocal
 
 Hyperlocal is a flyer-generation pipeline that combines:
-- Local Ollama (OpenAI-compatible) for text + vision
+- Local vLLM-MLX (OpenAI-compatible) for text + vision
 - Local SDXL for final flyer images
 - Postgres for persistence
 - On-disk output storage under `output/`
@@ -43,12 +43,29 @@ bun run dev
 - Persistence is optional and controlled by env flags.
 - Image generation defaults to local SDXL (via a running SDXL WebUI/Comfy endpoint).
 
-## Local SDXL
-Use the bundled SDXL WebUI container:
+## Local LLM (vllm-mlx)
+Install and run the local LLM server:
 ```bash
-docker compose up -d sdxl
+uv tool install vllm-mlx
+mlx/run_mlx_servers.sh
 ```
-Place your model file at `sdxl/models/Stable-diffusion/` (see `sdxl/README.md`).
+
+Set the backend to use vllm-mlx (host ports assume local run):
+```bash
+HYPERLOCAL_LLM_PROVIDER=vllm_mlx
+HYPERLOCAL_TEXT_BASE_URL=http://localhost:11435/v1
+HYPERLOCAL_VISION_BASE_URL=http://localhost:11436/v1
+HYPERLOCAL_TEXT_MODEL=default
+HYPERLOCAL_VISION_MODEL=default
+```
+
+## Local SDXL
+Run the local SDXL server:
+```bash
+cd sdxl
+uv sync
+uv run uvicorn server:app --host 0.0.0.0 --port 17860
+```
 
 If you run the backend outside Docker, point it to the host port:
 ```bash

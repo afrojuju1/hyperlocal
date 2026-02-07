@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.12
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
@@ -6,6 +6,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN pip install --no-cache-dir uv
+
+ENV TYPST_INSTALL=/usr/local
+RUN curl -fsSL https://install.typst.community/install.sh | sh
 
 COPY backend/pyproject.toml backend/uv.lock /app/
 RUN uv sync --frozen --no-dev

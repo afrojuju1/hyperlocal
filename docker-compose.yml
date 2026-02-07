@@ -10,18 +10,28 @@ services:
       DATABASE_URL: postgresql+psycopg://hyperlocal:hyperlocal@db:5432/hyperlocal
       HYPERLOCAL_PERSIST_ENABLED: "1"
       HYPERLOCAL_STORAGE_ENABLED: "0"
-      OLLAMA_BASE_URL: http://host.docker.internal:11434/v1
+      HYPERLOCAL_LLM_PROVIDER: vllm_mlx
+      HYPERLOCAL_LLM_API_KEY: not-needed
+      HYPERLOCAL_TEXT_BASE_URL: http://host.docker.internal:11435/v1
+      HYPERLOCAL_VISION_BASE_URL: http://host.docker.internal:11436/v1
+      HYPERLOCAL_TEXT_MODEL: default
+      HYPERLOCAL_VISION_MODEL: default
       HYPERLOCAL_IMAGE_PROVIDER: sdxl
-      SDXL_API_URL: http://sdxl:7860/sdapi/v1/txt2img
+      SDXL_API_URL: http://sdxl:17860/sdapi/v1/txt2img
+      HYPERLOCAL_IMAGE_SIZE: "1024x1024"
+      SDXL_STEPS: "2"
+      SDXL_CFG_SCALE: "0"
     ports:
       - "18000:8000"
+    volumes:
+      - ./output:/app/output
     depends_on:
       db:
         condition: service_started
       redis:
         condition: service_started
       sdxl:
-        condition: service_healthy
+        condition: service_started
 
   web:
     build:
@@ -34,6 +44,30 @@ services:
       - "13000:3000"
     depends_on:
       - backend
+
+  sdxl:
+    build:
+      context: .
+      dockerfile: sdxl/Dockerfile
+    container_name: hyperlocal-sdxl
+    environment:
+      SDXL_MODEL_ID: stabilityai/sdxl-turbo
+      SDXL_DEVICE: cpu
+      SDXL_DTYPE: float32
+      HF_HOME: /models/hf
+      HF_HUB_ENABLE_HF_TRANSFER: "1"
+      HF_TOKEN: ${HF_TOKEN}
+    ports:
+      - "17860:17860"
+    volumes:
+      - sdxl_hf_cache:/models/hf
+      - ./sdxl/models:/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:17860/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
 
   db:
     image: postgres:16
@@ -53,20 +87,23 @@ services:
     ports:
       - "16379:6379"
 
-  sdxl:
-    image: zhiqiangwang/stable-diffusion-webui:latest
-    container_name: hyperlocal-sdxl
+  mlx-image:
+    profiles: ["mlx"]
+    build:
+      context: .
+      dockerfile: mlx/Dockerfile.cuda
+    container_name: hyperlocal-mlx-image
     environment:
-      CLI_ARGS: "--api --listen --port 7860 --skip-torch-cuda-test --use-cpu all"
+      MLX_MODEL_TYPE: image-generation
+      MLX_MODEL_PATH: /models/flux
+      MLX_CONFIG_NAME: flux-krea-dev
+      MLX_PORT: "8000"
     ports:
-      - "17860:7860"
+      - "18002:8000"
     volumes:
-      - ./sdxl:/sd/stable-diffusion-webui
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7860/sdapi/v1/sd-models')"]
-      interval: 20s
-      timeout: 5s
-      retries: 30
+      - mlx_models:/models
 
 volumes:
   hyperlocal_pgdata:
+  sdxl_hf_cache:
+  mlx_models:

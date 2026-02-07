@@ -59,58 +59,35 @@ def copy_prompt(brief: CreativeBrief, style: BrandStyle, variants: int) -> str:
     )
 
 
-def image_prompt(brief: CreativeBrief, style: BrandStyle, copy: CopyVariant) -> str:
+def background_prompt(brief: CreativeBrief, style: BrandStyle, copy: CopyVariant) -> str:
     palette = ", ".join(style.palette or brief.brand_colors or [])
     style_keywords = ", ".join(style.style_keywords or brief.style_keywords or [])
     layout_guidance = style.layout_guidance or (
-        "Clear text zones with high contrast; large headline at top; body mid; CTA button bottom."
+        "Large clean focal area with soft gradients, a clear visual anchor, and ample negative space."
     )
     constraints = "; ".join(brief.constraints or [])
     details = brief.business_details
-    details_text = ""
-    business_name = ""
-    if details:
-        business_name = details.name
-        hours_text = _format_hours(details)
-        address_line = " ".join(
-            part
-            for part in [
-                details.name,
-                details.address,
-                details.city,
-                details.state,
-                details.postal_code,
-            ]
-            if part
-        )
-        details_text = (
-            f"Include these exact business details: {address_line}. "
-            f"Phone: {details.phone or ''}. Hours: {hours_text or ''}. "
-            f"Service area: {details.service_area or ''}. Website: {details.website or ''}. "
-        )
+    business_name = details.name if details else ""
     return (
-        "Design a 6x9 inch direct-mail flyer image. "
-        "Include the exact text below, spelled exactly and legible. "
-        "Use a clean, modern layout with strong hierarchy. "
+        "Create a background-only image for a 6x9 inch direct-mail flyer. "
+        "Do NOT include any text, letters, words, logos, signage, or typography. "
+        "Leave ample clean space for a text overlay. "
         f"Visual style: {style_keywords or 'bright, fresh, modern'}. "
         f"Color palette: {palette or 'vibrant fruit colors, fresh greens, clean whites'}. "
         f"Layout guidance: {layout_guidance}. "
         f"Business: {business_name or 'not specified'}. Product: {brief.product}. Offer: {brief.offer}. "
         f"Constraints: {constraints or 'No people; no faces; no extra slogans'}. "
-        f"{details_text}"
-        "Text must be fully readable and centered on safe margins. "
-        "\nExact text to include (keep line breaks as written):\n"
-        f"{copy.headline}\n"
-        f"{copy.subhead}\n"
-        f"{copy.body}\n"
-        f"{copy.cta}\n"
-        f"{copy.disclaimer or ''}\n"
-        "\nMake the background visually rich but not busy, so the text remains crisp."
+        "Use high-quality lighting and depth. Make the background visually rich but not busy."
     )
+
+
+def image_prompt(brief: CreativeBrief, style: BrandStyle, copy: CopyVariant) -> str:
+    return background_prompt(brief, style, copy)
 
 
 def negative_prompt() -> str:
     return (
-        "Avoid illegible or distorted text, cluttered layouts, and low contrast. "
-        "Avoid extra text not provided. Avoid faces, hands, or people."
+        "Avoid any text, letters, words, or signage. Avoid illegible or distorted text, "
+        "cluttered layouts, and low contrast. Avoid extra text not provided. "
+        "Avoid faces, hands, or people."
     )

@@ -4,15 +4,14 @@ import json
 import time
 from pathlib import Path
 
-from hyperlocal.config import MODEL_CONFIG, RUNTIME_CONFIG
-from hyperlocal.openai_helpers import (
-    build_client,
-    chat_json,
-    generate_image,
-    image_url_from_path,
-)
+from hyperlocal.config import RUNTIME_CONFIG
+from hyperlocal.openai_helpers import chat_json, generate_image, image_url_from_path
 from hyperlocal.image_providers import build_sdxl_config, generate_sdxl_image
-from hyperlocal.prompt_templates import copy_prompt, image_prompt, negative_prompt
+from PIL import Image
+
+from hyperlocal.llm_providers import build_llm_clients
+from hyperlocal.prompt_templates import copy_prompt, background_prompt, negative_prompt
+from hyperlocal.typst_renderer import render_typst_overlay
 from hyperlocal.qc import extract_text, validate_text
 from hyperlocal.persistence import PersistenceManager
 from hyperlocal.storage import build_storage, key_for_image
@@ -22,16 +21,19 @@ from hyperlocal.schemas import BrandStyle, CopyVariant, CreativeBrief, ImageVari
 
 class FlyerPipeline:
     def __init__(self) -> None:
-        self.local_client = build_client(
-            base_url=RUNTIME_CONFIG.ollama_base_url,
-            api_key=RUNTIME_CONFIG.ollama_api_key,
-        )
+        llm_clients = build_llm_clients()
+        self.text_client = llm_clients.text_client
+        self.vision_client = llm_clients.vision_client
+        self.llm_provider = llm_clients.provider
         self.image_provider = RUNTIME_CONFIG.image_provider.lower()
         self.remote_client = None
         if self.image_provider == "openai":
             if not RUNTIME_CONFIG.openai_api_key:
                 raise RuntimeError("OPENAI_API_KEY is not set")
-            self.remote_client = build_client(api_key=RUNTIME_CONFIG.openai_api_key)
+            self.remote_client = build_client(
+                base_url=RUNTIME_CONFIG.openai_base_url,
+                api_key=RUNTIME_CONFIG.openai_api_key,
+            )
         self.sdxl_config = build_sdxl_config(
             api_url=RUNTIME_CONFIG.sdxl_api_url,
             size=RUNTIME_CONFIG.image_size,
@@ -39,8 +41,8 @@ class FlyerPipeline:
             cfg_scale=RUNTIME_CONFIG.sdxl_cfg_scale,
             sampler=RUNTIME_CONFIG.sdxl_sampler,
         )
-        self.text_model = MODEL_CONFIG.text_model
-        self.vision_model = MODEL_CONFIG.vision_model
+        self.text_model = llm_clients.text_model
+        self.vision_model = llm_clients.vision_model
         self.storage = build_storage()
         self.persistence = None
         if RUNTIME_CONFIG.persist_enabled and RUNTIME_CONFIG.database_url:
@@ -66,7 +68,7 @@ class FlyerPipeline:
                 "content": [{"type": "text", "text": prompt}] + image_parts,
             }
         ]
-        data = chat_json(self.local_client, self.vision_model, messages)
+        data = chat_json(self.vision_client, self.vision_model, messages)
         return BrandStyle(**data)
 
     def _brand_style_from_text(self, brief: CreativeBrief) -> BrandStyle:
@@ -79,7 +81,7 @@ class FlyerPipeline:
             f"Tone: {brief.tone}. Audience: {brief.audience or 'local households'}."
         )
         data = chat_json(
-            self.local_client,
+            self.text_client,
             self.text_model,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -118,22 +120,29 @@ class FlyerPipeline:
     def generate_copy_variants(self, brief: CreativeBrief, style: BrandStyle) -> list[CopyVariant]:
         target_count = max(1, RUNTIME_CONFIG.variants)
         prompt = copy_prompt(brief, style, target_count)
+        last_error: Exception | None = None
         for _ in range(3):
-            data = chat_json(
-                self.local_client,
-                self.text_model,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            variants = self._coerce_copy_variants(data)
-            if len(variants) == target_count:
-                return [self._ensure_constraints(v, brief, style) for v in variants]
-            if len(variants) > target_count:
-                trimmed = variants[:target_count]
-                return [self._ensure_constraints(v, brief, style) for v in trimmed]
-            variants = self._pad_variants(variants, brief, style, target_count)
-            if len(variants) == target_count:
-                return [self._ensure_constraints(v, brief, style) for v in variants]
-        raise ValueError("Copy generation did not return expected variants after retries")
+            try:
+                data = chat_json(
+                    self.text_client,
+                    self.text_model,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+                variants = self._coerce_copy_variants(data)
+                if len(variants) == target_count:
+                    return [self._ensure_constraints(v, brief, style) for v in variants]
+                if len(variants) > target_count:
+                    trimmed = variants[:target_count]
+                    return [self._ensure_constraints(v, brief, style) for v in trimmed]
+                variants = self._pad_variants(variants, brief, style, target_count)
+                if len(variants) == target_count:
+                    return [self._ensure_constraints(v, brief, style) for v in variants]
+            except Exception as exc:
+                last_error = exc
+                continue
+        # Fallback to a deterministic copy variant so generation can proceed
+        fallback = [self._fallback_copy_variant(brief, style) for _ in range(target_count)]
+        return [self._ensure_constraints(v, brief, style) for v in fallback]
 
     def _pad_variants(
         self,
@@ -154,7 +163,7 @@ class FlyerPipeline:
             f"Tone: {brief.tone}. Style: {', '.join(style.style_keywords)}."
         )
         data = chat_json(
-            self.local_client,
+            self.text_client,
             self.text_model,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -178,11 +187,34 @@ class FlyerPipeline:
             + json.dumps(variant.model_dump(), indent=2)
         )
         data = chat_json(
-            self.local_client,
+            self.text_client,
             self.text_model,
             messages=[{"role": "user", "content": prompt}],
         )
         return CopyVariant(**data)
+
+    
+    def _truncate_words(self, text: str, max_words: int) -> str:
+        words = [w for w in text.strip().split() if w]
+        return " ".join(words[:max_words])
+
+    def _fallback_copy_variant(self, brief: CreativeBrief, style: BrandStyle) -> CopyVariant:
+        business_name = self._business_name(brief)
+        product = brief.product or "Local specials"
+        offer = brief.offer or "Limited time savings"
+        headline = self._truncate_words(product, 6) or business_name
+        subhead = self._truncate_words(f"{business_name} favorites", 10)
+        body = self._truncate_words(f"{offer} on {product}.", 28)
+        cta = self._truncate_words(brief.cta or "Order Today", 4)
+        service_area = brief.business_details.service_area if brief.business_details else ""
+        disclaimer = self._truncate_words(brief.audience or service_area or "Limited time", 12)
+        return CopyVariant(
+            headline=headline,
+            subhead=subhead,
+            body=body,
+            cta=cta,
+            disclaimer=disclaimer,
+        )
 
     def _within_constraints(self, variant: CopyVariant) -> bool:
         def word_count(text: str) -> int:
@@ -206,7 +238,14 @@ class FlyerPipeline:
                 data = data["copy_variants"]
         if isinstance(data, list):
             if all(isinstance(item, dict) for item in data):
-                return [CopyVariant(**item) for item in data]
+                variants: list[CopyVariant] = []
+                for item in data:
+                    try:
+                        variants.append(CopyVariant(**item))
+                    except Exception:
+                        continue
+                if variants:
+                    return variants
             if all(isinstance(item, str) for item in data):
                 return self._repair_copy_variants(data)
         raise ValueError("Copy generation did not return usable JSON variants")
@@ -219,7 +258,7 @@ class FlyerPipeline:
             + json.dumps(items, indent=2)
         )
         data = chat_json(
-            self.local_client,
+            self.text_client,
             self.text_model,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -235,19 +274,37 @@ class FlyerPipeline:
         for variant in variants:
             packages.append(
                 PromptPackage(
-                    image_prompt=image_prompt(brief, style, variant),
+                    image_prompt=background_prompt(brief, style, variant),
                     negative_prompt=neg,
                     copy_variant=variant,
                 )
             )
         return packages
 
+    def _compose_with_overlay(
+        self, *, background_path: str, overlay_path: str, output_path: str
+    ) -> None:
+        background = Image.open(background_path).convert("RGBA")
+        overlay = Image.open(overlay_path).convert("RGBA")
+        if overlay.size != background.size:
+            overlay = overlay.resize(background.size, resample=Image.LANCZOS)
+        composed = Image.alpha_composite(background, overlay)
+        composed.save(output_path)
+
     def generate_images(
-        self, packages: list[PromptPackage], run_dir: str, run_id: int | None
+        self,
+        *,
+        packages: list[PromptPackage],
+        run_dir: str,
+        run_id: int | None,
+        brief: CreativeBrief,
+        style: BrandStyle,
     ) -> list[ImageVariant]:
         variants: list[ImageVariant] = []
         for idx, pkg in enumerate(packages, start=1):
             image_path = str(Path(run_dir) / f"variant_{idx:02d}.png")
+            background_path = str(Path(run_dir) / f"variant_{idx:02d}_bg.png")
+            overlay_path = str(Path(run_dir) / f"variant_{idx:02d}_overlay.png")
             variant_id = None
             if self.persistence and run_id is not None:
                 record = self.persistence.create_variant(
@@ -260,6 +317,15 @@ class FlyerPipeline:
                 variant_id = record.id
             qc_passed = False
             qc_text = ""
+            render_typst_overlay(
+                brief=brief,
+                style=style,
+                copy=pkg.copy_variant,
+                output_path=overlay_path,
+                size=brief.size,
+                pixel_size=RUNTIME_CONFIG.image_size,
+                typst_bin=RUNTIME_CONFIG.typst_bin,
+            )
             for attempt in range(1, RUNTIME_CONFIG.max_image_attempts + 1):
                 if self.image_provider == "openai":
                     generate_image(
@@ -269,7 +335,7 @@ class FlyerPipeline:
                             + "\n\nNegative constraints: "
                             + pkg.negative_prompt
                         ),
-                        output_path=image_path,
+                        output_path=background_path,
                         model=RUNTIME_CONFIG.image_model,
                         size=RUNTIME_CONFIG.image_size,
                         quality=RUNTIME_CONFIG.image_quality,
@@ -278,16 +344,21 @@ class FlyerPipeline:
                     generate_sdxl_image(
                         prompt=pkg.image_prompt,
                         negative_prompt=pkg.negative_prompt,
-                        output_path=image_path,
+                        output_path=background_path,
                         config=self.sdxl_config,
                     )
                 else:
                     raise RuntimeError(f"Unknown image provider: {self.image_provider}")
+                self._compose_with_overlay(
+                    background_path=background_path,
+                    overlay_path=overlay_path,
+                    output_path=image_path,
+                )
                 if not RUNTIME_CONFIG.qc_enabled:
                     qc_passed = True
                     qc_text = "qc disabled"
                 else:
-                    qc_text = extract_text(self.local_client, self.vision_model, image_path)
+                    qc_text = extract_text(self.vision_client, self.vision_model, image_path)
                     expected = [
                         pkg.copy_variant.headline,
                         pkg.copy_variant.subhead,
@@ -339,7 +410,11 @@ class FlyerPipeline:
             run_dir = str(Path(RUNTIME_CONFIG.output_dir) / f"flyer_runs/{timestamp}")
             Path(run_dir).mkdir(parents=True, exist_ok=True)
             images = self.generate_images(
-                packages, run_dir, run_record.id if run_record else None
+                packages=packages,
+                run_dir=run_dir,
+                run_id=run_record.id if run_record else None,
+                brief=brief,
+                style=style,
             )
 
             result = RunResult(

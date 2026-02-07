@@ -105,8 +105,11 @@ export default function Home() {
     if (path.startsWith("s3://")) {
       return "";
     }
-    const cleaned = path.replace(/^\.?\//, "");
-    return `${apiBase}/files/${cleaned}`;
+    const cleaned = path.replace(/^\.\?\//, "");
+    const withoutOutput = cleaned.startsWith("output/")
+      ? cleaned.slice("output/".length)
+      : cleaned;
+    return `${apiBase}/files/${withoutOutput}`;
   };
 
   const onSubmit = async () => {

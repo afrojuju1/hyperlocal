@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import base64
 import json
+import ast
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -40,11 +42,13 @@ def chat_content(
     return response.choices[0].message.content or ""
 
 
-def chat_json(
-    client: OpenAI, model: str, messages: list[dict[str, Any]]
-) -> Any:
-    content = chat_content(client, model, messages).strip()
+CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+
+
+def _parse_json_like(content: str):
+    content = content.strip()
     content = content.replace("```json", "").replace("```", "").strip()
+    content = CONTROL_CHARS.sub("", content)
     try:
         return json.loads(content)
     except json.JSONDecodeError:
@@ -57,7 +61,44 @@ def chat_json(
                 return obj
             except json.JSONDecodeError:
                 continue
-        raise
+
+        start = min(
+            (pos for pos in (content.find("{"), content.find("[")) if pos != -1),
+            default=-1,
+        )
+        end = max(content.rfind("}"), content.rfind("]"))
+        if start != -1 and end != -1 and end > start:
+            snippet = content[start : end + 1]
+            try:
+                return json.loads(snippet)
+            except json.JSONDecodeError:
+                try:
+                    return ast.literal_eval(snippet)
+                except (ValueError, SyntaxError):
+                    pass
+        try:
+            return ast.literal_eval(content)
+        except (ValueError, SyntaxError):
+            return None
+
+def chat_json(
+    client: OpenAI, model: str, messages: list[dict[str, Any]]
+) -> Any:
+    content = chat_content(client, model, messages)
+    parsed = _parse_json_like(content)
+    if parsed is not None:
+        return parsed
+
+    repair_prompt = (
+        "Fix the following into valid JSON. Return JSON only, no commentary. "
+        "Ensure keys/values are properly quoted.\n\n"
+        + content
+    )
+    repaired = chat_content(client, model, messages=[{"role": "user", "content": repair_prompt}])
+    parsed = _parse_json_like(repaired)
+    if parsed is not None:
+        return parsed
+    raise json.JSONDecodeError("Failed to parse JSON from model output", content, 0)
 
 
 def generate_image(
