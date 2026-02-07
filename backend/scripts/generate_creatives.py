@@ -21,6 +21,13 @@ class PromptRecipe:
     prompt: str
 
 
+@dataclass(frozen=True)
+class PromptVariant:
+    slug: str
+    title: str
+    prompt: str
+
+
 def timestamp() -> str:
     return datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -49,16 +56,6 @@ def build_recipes() -> list[PromptRecipe]:
             ),
         ),
         PromptRecipe(
-            slug="flat_lay",
-            title="Ingredient Flat Lay",
-            prompt=(
-                f"{base} "
-                "Top-down flat lay of sliced mango, citrus, berries, and mint. "
-                "A smoothie cup partially visible at the edge. "
-                "Clean white surface with subtle color accents, tidy arrangement."
-            ),
-        ),
-        PromptRecipe(
             slug="pour_splash",
             title="Pour / Splash Action",
             prompt=(
@@ -67,14 +64,25 @@ def build_recipes() -> list[PromptRecipe]:
                 "Mango and citrus pieces mid-air, motion frozen, studio lighting."
             ),
         ),
-        PromptRecipe(
-            slug="counter_lifestyle",
-            title="Counter Lifestyle",
-            prompt=(
-                f"{base} "
-                "Cafe counter scene with two clear smoothie cups, fruit bowl nearby. "
-                "Morning natural light, warm tone, shallow depth of field."
-            ),
+    ]
+
+
+def build_variants() -> list[PromptVariant]:
+    return [
+        PromptVariant(
+            slug="lighting_bright",
+            title="Lighting: Bright Studio",
+            prompt="Bright studio lighting, high-key, clean white bounce, crisp highlights.",
+        ),
+        PromptVariant(
+            slug="ingredient_mango",
+            title="Ingredient Focus: Mango",
+            prompt="Mango-forward ingredients, rich golden mango tones, mango slices dominant.",
+        ),
+        PromptVariant(
+            slug="composition_wide",
+            title="Composition: Wide Negative Space",
+            prompt="Wider composition with generous negative space for future text overlay.",
         ),
     ]
 
@@ -90,33 +98,32 @@ def save_prompt(path: Path, prompt: str) -> None:
 def main() -> None:
     load_dotenv()
 
-    models = ["x/flux2-klein", "x/z-image-turbo"]
     recipes = build_recipes()
+    variants = build_variants()
 
-    run_dir = Path(RUNTIME_CONFIG.output_dir) / "ollama" / "creatives_v1" / timestamp()
+    run_dir = Path(RUNTIME_CONFIG.output_dir) / "ollama" / "creatives_v2" / timestamp()
     ensure_dir(run_dir)
 
-    for model in models:
-        config = build_ollama_image_config(
-            model=model,
-            timeout=RUNTIME_CONFIG.ollama_image_timeout,
-        )
-        model_dir = run_dir / model.replace("/", "_")
-        ensure_dir(model_dir)
+    model = "x/z-image-turbo"
+    config = build_ollama_image_config(
+        model=model,
+        timeout=RUNTIME_CONFIG.ollama_image_timeout,
+    )
 
-        for recipe in recipes:
-            recipe_dir = model_dir / recipe.slug
-            ensure_dir(recipe_dir)
-            image_path = recipe_dir / "creative.png"
-            prompt_path = recipe_dir / "prompt.txt"
+    for recipe in recipes:
+        for variant in variants:
+            prompt = f"{recipe.prompt} {variant.prompt}"
+            filename = f"{recipe.slug}__{variant.slug}.png"
+            image_path = run_dir / filename
+            prompt_path = run_dir / f"{recipe.slug}__{variant.slug}.txt"
 
-            print(f"Generating {recipe.title} with {model} -> {image_path}")
+            print(f"Generating {recipe.title} / {variant.title} -> {image_path}")
             generate_ollama_image(
-                prompt=recipe.prompt,
+                prompt=prompt,
                 output_path=str(image_path),
                 config=config,
             )
-            save_prompt(prompt_path, recipe.prompt)
+            save_prompt(prompt_path, prompt)
             print(f"Saved: {image_path}")
 
 
