@@ -96,6 +96,11 @@ def _render_workflow_template(path: str, values: dict[str, Any]) -> dict[str, An
         ) from exc
 
 
+def render_comfyui_workflow_template(path: str, values: dict[str, Any]) -> dict[str, Any]:
+    """Public wrapper so callers can save the rendered workflow for debugging/repro."""
+    return _render_workflow_template(path, values)
+
+
 def _normalize_hex(value: str | None) -> str | None:
     if not value:
         return None
@@ -166,6 +171,60 @@ def _download_image(
         f.write(resp.content)
 
 
+def generate_comfyui_background_image(
+    *,
+    prompt: str,
+    negative_prompt: str,
+    output_path: str,
+    config: ComfyUiConfig,
+    seed: int = 42,
+) -> ImageResult:
+    """
+    Generate a single image via ComfyUI using a workflow template that only depends on:
+    PROMPT, NEGATIVE_PROMPT, WIDTH, HEIGHT (and optionally SEED).
+
+    This is useful for background-only or ad-creative generation where we don't want
+    flyer text/layout overlays.
+    """
+    values = {
+        "PROMPT": prompt,
+        "NEGATIVE_PROMPT": negative_prompt,
+        "WIDTH": config.width,
+        "HEIGHT": config.height,
+        "SEED": seed,
+    }
+    workflow = _render_workflow_template(config.workflow_path, values)
+    timeout = max(10.0, float(config.timeout))
+    with httpx.Client(timeout=timeout) as client:
+        resp = client.post(f"{config.api_url}/prompt", json={"prompt": workflow})
+        resp.raise_for_status()
+        data = resp.json()
+        prompt_id = data.get("prompt_id")
+        if not prompt_id:
+            raise RuntimeError("ComfyUI did not return a prompt_id")
+        deadline = time.time() + timeout
+        outputs: dict[str, Any] | None = None
+        while time.time() < deadline:
+            hist_resp = client.get(f"{config.api_url}/history/{prompt_id}")
+            if hist_resp.status_code == 200:
+                history = hist_resp.json().get(prompt_id)
+                if history:
+                    outputs = history.get("outputs")
+                    if outputs:
+                        break
+            time.sleep(0.5)
+        if not outputs:
+            raise RuntimeError("ComfyUI did not produce outputs before timeout")
+        image_ref = _select_image_ref(outputs, config.output_node)
+        _download_image(
+            client,
+            api_url=config.api_url,
+            image_ref=image_ref,
+            output_path=output_path,
+        )
+    return ImageResult(path=output_path, revised_prompt=None)
+
+
 def generate_comfyui_image(
     *,
     prompt: str,
@@ -175,6 +234,7 @@ def generate_comfyui_image(
     brief: CreativeBrief,
     style: BrandStyle,
     copy: CopyVariant,
+    workflow_overrides: dict[str, Any] | None = None,
 ) -> ImageResult:
     palette_items = style.palette or brief.brand_colors or []
     palette = ", ".join(palette_items)
@@ -209,6 +269,9 @@ def generate_comfyui_image(
         "TEXT_MUTED": "#333333",
         "TEXT_LIGHT": "#ffffff",
     }
+    if workflow_overrides:
+        # Allow workflows to accept additional knobs like CKPT_NAME, STEPS, CFG, SEED, etc.
+        values.update(workflow_overrides)
     workflow = _render_workflow_template(config.workflow_path, values)
     timeout = max(10.0, float(config.timeout))
     with httpx.Client(timeout=timeout) as client:
