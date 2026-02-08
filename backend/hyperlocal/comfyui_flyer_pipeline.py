@@ -5,11 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from hyperlocal.comfyui_provider import (
-    build_comfyui_config,
-    generate_comfyui_image,
-    render_comfyui_workflow_template,
-)
+from hyperlocal.comfyui_provider import build_comfyui_config, generate_comfyui_image
 from hyperlocal.config import MODEL_CONFIG, RUNTIME_CONFIG
 from hyperlocal.llm_providers import build_llm_clients
 from hyperlocal.openai_helpers import chat_json
@@ -68,7 +64,7 @@ class ComfyFlyerPipeline:
         # Resolve workflow path relative to repo root even when invoked from `backend/`.
         backend_root = Path(__file__).resolve().parents[1]
         repo_root = backend_root.parent
-        default_workflow = repo_root / "comfyui" / "workflows" / "flyer_full_template.json"
+        default_workflow = repo_root / "comfyui" / "workflows" / "flyer_ad_v1_template.json"
         if workflow_path:
             wf = Path(workflow_path)
             self.workflow_path = str(wf if wf.is_absolute() else (repo_root / wf))
@@ -133,21 +129,110 @@ class ComfyFlyerPipeline:
             copies.append(fallback)
         return copies
 
-    def build_background_prompt(self, brief: CreativeBrief, style: BrandStyle, copy: CopyVariant) -> str:
+    def _ensure_overlay_fit(self, brief: CreativeBrief, style: BrandStyle, copy: CopyVariant) -> CopyVariant:
+        # Conservative limits for the current overlay layout (ad_v1).
+        def wc(text: str) -> int:
+            return len([w for w in text.strip().split() if w])
+
+        max_chars = {
+            "headline": 22,
+            "subhead": 34,
+            "body": 160,
+            "cta": 16,
+            "disclaimer": 34,
+        }
+        ok = (
+            1 <= wc(copy.headline) <= 6
+            and 1 <= wc(copy.subhead) <= 10
+            and 1 <= wc(copy.body) <= 32
+            and 1 <= wc(copy.cta) <= 4
+            and wc(copy.disclaimer or "") <= 12
+            and len(copy.headline) <= max_chars["headline"]
+            and len(copy.subhead) <= max_chars["subhead"]
+            and len(copy.body) <= max_chars["body"]
+            and len(copy.cta) <= max_chars["cta"]
+            and len(copy.disclaimer or "") <= max_chars["disclaimer"]
+        )
+        if ok:
+            return copy
+
+        prompt = (
+            "Rewrite the flyer copy to fit strict overlay size limits and length constraints. "
+            "Return JSON with keys: headline, subhead, body, cta, disclaimer. "
+            "Constraints: headline <= 6 words and <= 22 chars; "
+            "subhead <= 10 words and <= 34 chars; "
+            "body <= 32 words and <= 160 chars; "
+            "cta <= 4 words and <= 16 chars; "
+            "disclaimer <= 12 words and <= 34 chars. "
+            "No emojis. Keep meaning. "
+            f"Business: {brief.business_details.name}. Product: {brief.product}. Offer: {brief.offer}. "
+            f"Tone: {brief.tone}. Style keywords: {', '.join(style.style_keywords)}. "
+            "Original:\n"
+            + json.dumps(copy.model_dump(), indent=2)
+        )
+        data = chat_json(
+            self.text_client,
+            self.text_model,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        try:
+            rewritten = CopyVariant(**data)
+        except Exception:
+            rewritten = copy
+
+        # Final hard truncation fallback (avoid crashing image generation).
+        def trunc(text: str, limit: int) -> str:
+            t = (text or "").strip()
+            return t if len(t) <= limit else (t[: max(0, limit - 1)].rstrip() + "…")
+
+        return CopyVariant(
+            headline=trunc(rewritten.headline, max_chars["headline"]),
+            subhead=trunc(rewritten.subhead, max_chars["subhead"]),
+            body=trunc(rewritten.body, max_chars["body"]),
+            cta=trunc(rewritten.cta, max_chars["cta"]),
+            disclaimer=trunc(rewritten.disclaimer or "", max_chars["disclaimer"]) or None,
+        )
+
+    def build_background_prompt(self, brief: CreativeBrief, style: BrandStyle, copy: CopyVariant, idx: int) -> str:
         palette = ", ".join(style.palette or brief.brand_colors or [])
         style_keywords = ", ".join(style.style_keywords or brief.style_keywords or [])
-        # Align with flyer_full overlay positions: top banner + body area + CTA + footer.
+        product_lower = (brief.product or "").lower()
+        is_hvac = any(tok in product_lower for tok in ["hvac", "ac", "air", "tune", "cool"]) or "hvac" in (
+            brief.offer or ""
+        ).lower()
+        if is_hvac:
+            directions = [
+                "Clean modern living room with a subtle visible vent/register; gentle cool airflow suggested by soft realistic haze/light beams (not icons).",
+                "Clean outdoor AC condenser beside a modern home exterior; bright daylight; minimal landscaping; no labels/plates.",
+                "Premium close-up of a clean HVAC register/vent with crisp highlights; minimal interior background; lots of negative space.",
+            ]
+        else:
+            directions = [
+                "Hero mango smoothie in a clear unbranded cup with condensation; mango slices and mint; appetizing and bright.",
+                "Clean ingredient flatlay: mango, citrus wedges, mint, ice; tidy geometry; modern surface; airy.",
+                "Dynamic mango pour into a clear cup with a clean splash; frozen droplets; energetic but minimal.",
+            ]
+        direction = directions[(idx - 1) % len(directions)]
+
+        # Align with overlay positions: top banner + body card + CTA + footer card.
+        layout = (
+            "Layout rules: portrait 6x9. Reserve clean overlay zones: "
+            "top third (headline/subhead banner); "
+            "center area (body card); "
+            "lower area (CTA button); "
+            "bottom strip (disclaimer + business details). "
+            "Keep those zones simple and uncluttered with smooth gradients or subtle texture."
+        )
+
         return (
-            "Create a photorealistic background image for a 6x9 direct-mail promo flyer. "
-            "Do NOT include any text, letters, words, logos, signage, menus, labels, or typography. "
-            "Design the composition to leave clean space for overlays: "
-            "top third reserved for headline/subhead; mid area reserved for body; "
-            "lower area reserved for a CTA button and footer details. "
-            "Keep those regions simple and uncluttered. "
+            "Create a photorealistic background image for a direct-mail promo flyer. "
+            "Do NOT include any text, letters, words, numbers, logos, labels, signage, or typography. "
+            f"{layout} "
+            f"Scene direction: {direction} "
             f"Visual style: {style_keywords or 'clean, modern, photographic'}. "
             f"Color palette: {palette or 'clean whites, one strong accent color'}. "
             f"Business: {brief.business_details.name}. Product: {brief.product}. Offer: {brief.offer}. "
-            "No people, faces, hands. High contrast and printable."
+            "No people, faces, hands. High contrast and printable. No icons or diagrams."
         )
 
     def run(
@@ -164,7 +249,8 @@ class ComfyFlyerPipeline:
         run_dir.mkdir(parents=True, exist_ok=True)
 
         style = self.build_brand_style(brief)
-        copies = self.generate_copy_variants(brief, style, variants)
+        raw_copies = self.generate_copy_variants(brief, style, variants)
+        copies = [self._ensure_overlay_fit(brief, style, c) for c in raw_copies]
 
         config = build_comfyui_config(
             api_url=self.comfyui_api_url,
@@ -199,7 +285,7 @@ class ComfyFlyerPipeline:
 
         images: list[str] = []
         for idx, copy in enumerate(copies, start=1):
-            prompt = self.build_background_prompt(brief, style, copy)
+            prompt = self.build_background_prompt(brief, style, copy, idx)
             negative = (
                 "text, letters, words, numbers, logos, watermarks, labels, signage, "
                 "icons, diagrams, charts, UI, people, faces, hands, clutter"
@@ -222,44 +308,6 @@ class ComfyFlyerPipeline:
                 "SCHEDULER": settings.scheduler,
                 "DENOISE": settings.denoise,
             }
-            rendered = render_comfyui_workflow_template(config.workflow_path, {
-                # Rendered workflow should include the exact per-variant copy/prompt too.
-                "PROMPT": prompt,
-                "NEGATIVE_PROMPT": negative,
-                "WIDTH": config.width,
-                "HEIGHT": config.height,
-                "CKPT_NAME": settings.ckpt_name,
-                "SEED": settings.seed + idx,
-                "STEPS": settings.steps,
-                "CFG": settings.cfg,
-                "SAMPLER_NAME": settings.sampler_name,
-                "SCHEDULER": settings.scheduler,
-                "DENOISE": settings.denoise,
-                # The rest are filled by generate_comfyui_image, but we save a rendered copy here
-                # for debugging; we still call generate_comfyui_image for actual generation.
-                "FONT_PATH": "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
-                "HEADLINE": copy.headline,
-                "SUBHEAD": copy.subhead,
-                "BODY": copy.body,
-                "CTA": copy.cta,
-                "DISCLAIMER": copy.disclaimer or "",
-                "BUSINESS_BLOCK": business_block(brief),
-                "AUDIENCE": brief.audience or "",
-                "PALETTE": ", ".join(style.palette or []),
-                "STYLE_KEYWORDS": ", ".join(style.style_keywords or []),
-                "LAYOUT_GUIDANCE": style.layout_guidance or "",
-                "BUSINESS_NAME": brief.business_details.name,
-                "PRODUCT": brief.product,
-                "OFFER": brief.offer,
-                "CONSTRAINTS": "; ".join(brief.constraints or []),
-                "PRIMARY_COLOR": "#1e67b6",
-                "ACCENT_COLOR": "#62b6ff",
-                "TEXT_DARK": "#111111",
-                "TEXT_MUTED": "#333333",
-                "TEXT_LIGHT": "#ffffff",
-            })
-            (run_dir / f"{prefix}.workflow.json").write_text(json.dumps(rendered, indent=2) + "\n")
-
             image_path = run_dir / f"{prefix}.png"
             generate_comfyui_image(
                 prompt=prompt,
@@ -270,6 +318,7 @@ class ComfyFlyerPipeline:
                 style=style,
                 copy=copy,
                 workflow_overrides=overrides,
+                rendered_workflow_path=str(run_dir / f"{prefix}.workflow.json"),
             )
             images.append(str(image_path))
 

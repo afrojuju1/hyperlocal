@@ -235,6 +235,7 @@ def generate_comfyui_image(
     style: BrandStyle,
     copy: CopyVariant,
     workflow_overrides: dict[str, Any] | None = None,
+    rendered_workflow_path: str | None = None,
 ) -> ImageResult:
     palette_items = style.palette or brief.brand_colors or []
     palette = ", ".join(palette_items)
@@ -273,6 +274,9 @@ def generate_comfyui_image(
         # Allow workflows to accept additional knobs like CKPT_NAME, STEPS, CFG, SEED, etc.
         values.update(workflow_overrides)
     workflow = _render_workflow_template(config.workflow_path, values)
+    if rendered_workflow_path:
+        Path(rendered_workflow_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(rendered_workflow_path).write_text(json.dumps(workflow, indent=2) + "\n")
     timeout = max(10.0, float(config.timeout))
     with httpx.Client(timeout=timeout) as client:
         resp = client.post(f"{config.api_url}/prompt", json={"prompt": workflow})

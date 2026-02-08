@@ -18,6 +18,10 @@ Examples:
   Override checkpoint + sampler knobs (workflow is a template):
     cd backend
     uv run scripts/generate_comfyui_flyers.py --business hvac --ckpt "JuggernautXL_v9.safetensors" --steps 32 --cfg 5.5 --sampler euler --scheduler normal
+
+Notes:
+  The default workflow is `comfyui/workflows/flyer_ad_v1_template.json` which adds
+  a white body card and footer card for more "ad-ready" layouts.
 """
 
 import argparse
@@ -73,13 +77,13 @@ def main() -> None:
     parser.add_argument("--comfyui-api-url", default=None)
     parser.add_argument("--workflow", default=None, help="Override workflow template path.")
 
-    # Workflow knobs (flyer_full_template.json supports these).
+    # Workflow knobs (flyer_ad_v1_template.json supports these).
     parser.add_argument("--ckpt", default="sd_xl_base_1.0.safetensors")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--steps", type=int, default=30)
-    parser.add_argument("--cfg", type=float, default=6.5)
-    parser.add_argument("--sampler", default="euler")
-    parser.add_argument("--scheduler", default="normal")
+    parser.add_argument("--steps", type=int, default=28)
+    parser.add_argument("--cfg", type=float, default=5.5)
+    parser.add_argument("--sampler", default="dpmpp_2m_sde")
+    parser.add_argument("--scheduler", default="karras")
     parser.add_argument("--denoise", type=float, default=1.0)
     args = parser.parse_args()
 
