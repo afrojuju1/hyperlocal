@@ -92,6 +92,12 @@ def main() -> None:
     )
     parser.add_argument("--engine", choices=["llm", "template"], default="llm")
     parser.add_argument("--count", type=int, default=3)
+    parser.add_argument(
+        "--images-per-prompt",
+        type=int,
+        default=1,
+        help="Number of image renders per prompt (default: 1).",
+    )
     parser.add_argument("--business-kind", choices=["smoothie", "hvac"], default="smoothie")
     parser.add_argument("--text-mode", choices=["overlay", "in_image"], default="overlay")
     parser.add_argument(
@@ -120,6 +126,7 @@ def main() -> None:
     args = parser.parse_args()
 
     count = max(1, args.count)
+    images_per_prompt = max(1, args.images_per_prompt)
     provider = _normalize_provider(args.image_provider)
 
     # If user switches to HVAC but didn't explicitly override business/product/offer,
@@ -160,6 +167,7 @@ def main() -> None:
         "created_at": datetime.now().isoformat(),
         "engine": args.engine,
         "count": meta_count,
+        "images_per_prompt": images_per_prompt,
         "business_kind": args.business_kind,
         "text_mode": args.text_mode,
         "format_hint": args.format_hint,
@@ -186,9 +194,13 @@ def main() -> None:
         (run_dir / "manifest.json").write_text(json.dumps(meta, indent=2) + "\n")
 
         for i, spec in enumerate(specs, start=1):
-            image_path = run_dir / f"{i:02d}__{spec.slug}.png"
-            print(f"Generating image {i}/{len(specs)} -> {image_path}", flush=True)
-            generate_ollama_image(prompt=spec.prompt, output_path=str(image_path), config=config)
+            for v in range(1, images_per_prompt + 1):
+                image_path = run_dir / f"{i:02d}__{spec.slug}__v{v:02d}.png"
+                print(
+                    f"Generating image {i}/{len(specs)} variation {v}/{images_per_prompt} -> {image_path}",
+                    flush=True,
+                )
+                generate_ollama_image(prompt=spec.prompt, output_path=str(image_path), config=config)
 
     elif provider == "sdxl":
         config = build_sdxl_config(
@@ -199,14 +211,18 @@ def main() -> None:
             sampler=RUNTIME_CONFIG.sdxl_sampler,
         )
         for i, spec in enumerate(specs, start=1):
-            image_path = run_dir / f"{i:02d}__{spec.slug}.png"
-            print(f"Generating image {i}/{len(specs)} -> {image_path}", flush=True)
-            generate_sdxl_image(
-                prompt=spec.prompt,
-                negative_prompt=spec.negative_prompt,
-                output_path=str(image_path),
-                config=config,
-            )
+            for v in range(1, images_per_prompt + 1):
+                image_path = run_dir / f"{i:02d}__{spec.slug}__v{v:02d}.png"
+                print(
+                    f"Generating image {i}/{len(specs)} variation {v}/{images_per_prompt} -> {image_path}",
+                    flush=True,
+                )
+                generate_sdxl_image(
+                    prompt=spec.prompt,
+                    negative_prompt=spec.negative_prompt,
+                    output_path=str(image_path),
+                    config=config,
+                )
 
     else:  # openai
         if not RUNTIME_CONFIG.openai_api_key:
@@ -219,16 +235,20 @@ def main() -> None:
         meta["image_model"] = model
         (run_dir / "manifest.json").write_text(json.dumps(meta, indent=2) + "\n")
         for i, spec in enumerate(specs, start=1):
-            image_path = run_dir / f"{i:02d}__{spec.slug}.png"
-            print(f"Generating image {i}/{len(specs)} -> {image_path}", flush=True)
-            generate_image(
-                client=client,
-                prompt=spec.prompt,
-                output_path=str(image_path),
-                model=model,
-                size=RUNTIME_CONFIG.image_size,
-                quality=RUNTIME_CONFIG.image_quality,
-            )
+            for v in range(1, images_per_prompt + 1):
+                image_path = run_dir / f"{i:02d}__{spec.slug}__v{v:02d}.png"
+                print(
+                    f"Generating image {i}/{len(specs)} variation {v}/{images_per_prompt} -> {image_path}",
+                    flush=True,
+                )
+                generate_image(
+                    client=client,
+                    prompt=spec.prompt,
+                    output_path=str(image_path),
+                    model=model,
+                    size=RUNTIME_CONFIG.image_size,
+                    quality=RUNTIME_CONFIG.image_quality,
+                )
 
     print(f"Run complete: {run_dir}", flush=True)
 
