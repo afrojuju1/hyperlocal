@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import (
@@ -26,16 +27,30 @@ class CreativeRun(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     campaign_id: Mapped[Optional[int]] = mapped_column(Integer, index=True, nullable=True)
-    status: Mapped[str] = mapped_column(String(32), index=True, default="RUNNING")
+
+    # Canonical async lifecycle.
+    status: Mapped[str] = mapped_column(String(32), index=True, default="QUEUED")
+    stage: Mapped[str] = mapped_column(String(64), default="queued")
+    progress_pct: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Canonical request payload + pipeline metadata.
+    request_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    pipeline_version: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    output_dir: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    manifest_path: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Backward-compatible legacy fields.
     brief_json: Mapped[dict] = mapped_column(JSON, default=dict)
     brand_style_json: Mapped[dict] = mapped_column(JSON, default=dict)
     model_versions_json: Mapped[dict] = mapped_column(JSON, default=dict)
     error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    created_at: Mapped[str] = mapped_column(
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    updated_at: Mapped[str] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
@@ -57,16 +72,23 @@ class CreativeVariant(Base):
     copy_json: Mapped[dict] = mapped_column(JSON, default=dict)
     prompt_text: Mapped[str] = mapped_column(Text)
     negative_prompt: Mapped[str] = mapped_column(Text)
+
+    # Canonical two-stage assets.
+    background_image_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    overlay_template: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    final_image_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Backward-compatible legacy field.
     image_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     qc_passed: Mapped[bool] = mapped_column(Boolean, default=False)
     qc_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     qc_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
-    created_at: Mapped[str] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    updated_at: Mapped[str] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
@@ -84,9 +106,9 @@ class CreativeAsset(Base):
     image_path: Mapped[str] = mapped_column(Text)
     copy_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    created_at: Mapped[str] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    updated_at: Mapped[str] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )

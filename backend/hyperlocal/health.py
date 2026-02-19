@@ -21,23 +21,23 @@ def _check_llm_url(name: str, base_url: str) -> HealthCheck:
     try:
         resp = httpx.get(url, timeout=2.5)
         resp.raise_for_status()
-        detail = f\"ok ({RUNTIME_CONFIG.llm_provider})\"
+        detail = f"ok ({RUNTIME_CONFIG.llm_provider})"
         return HealthCheck(name, True, detail)
     except Exception as exc:
-        detail = f\"error ({RUNTIME_CONFIG.llm_provider}): {exc}\"
+        detail = f"error ({RUNTIME_CONFIG.llm_provider}): {exc}"
         return HealthCheck(name, False, detail)
 
 
 def _check_llm() -> list[HealthCheck]:
-    text_base = resolve_llm_base_url(\"text\").rstrip(\"/\")
-    vision_base = resolve_llm_base_url(\"vision\").rstrip(\"/\")
+    text_base = resolve_llm_base_url("text").rstrip("/")
+    vision_base = resolve_llm_base_url("vision").rstrip("/")
     unique = {text_base, vision_base}
     if len(unique) == 1:
         base_url = unique.pop()
-        return [_check_llm_url(\"llm\", base_url)]
+        return [_check_llm_url("llm", base_url)]
     return [
-        _check_llm_url(\"llm_text\", text_base),
-        _check_llm_url(\"llm_vision\", vision_base),
+        _check_llm_url("llm_text", text_base),
+        _check_llm_url("llm_vision", vision_base),
     ]
 
 

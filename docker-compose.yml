@@ -33,6 +33,38 @@ services:
       sdxl:
         condition: service_started
 
+  creative-worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: hyperlocal-creative-worker
+    environment:
+      DATABASE_URL: postgresql+psycopg://hyperlocal:hyperlocal@db:5432/hyperlocal
+      HYPERLOCAL_PERSIST_ENABLED: "1"
+      HYPERLOCAL_LLM_PROVIDER: vllm_mlx
+      HYPERLOCAL_LLM_API_KEY: not-needed
+      HYPERLOCAL_TEXT_BASE_URL: http://host.docker.internal:11435/v1
+      HYPERLOCAL_VISION_BASE_URL: http://host.docker.internal:11436/v1
+      HYPERLOCAL_TEXT_MODEL: default
+      HYPERLOCAL_VISION_MODEL: default
+      HYPERLOCAL_IMAGE_PROVIDER: sdxl
+      SDXL_API_URL: http://sdxl:17860/sdapi/v1/txt2img
+      HYPERLOCAL_IMAGE_SIZE: "1024x1536"
+      SDXL_STEPS: "2"
+      SDXL_CFG_SCALE: "0"
+      HYPERLOCAL_CREATIVE_RUN_POLL_INTERVAL: "2"
+      HYPERLOCAL_CREATIVE_RUN_MAX_CONCURRENT: "1"
+    command: ["uv", "run", "scripts/run_creative_worker.py"]
+    volumes:
+      - ./output:/app/output
+    depends_on:
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
+      sdxl:
+        condition: service_started
+
   web:
     build:
       context: .

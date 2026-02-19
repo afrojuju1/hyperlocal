@@ -1,9 +1,10 @@
 # Hyperlocal
 
-Hyperlocal is a flyer-generation pipeline that combines:
+Hyperlocal is a creative-generation pipeline that combines:
 - Local vLLM-MLX (OpenAI-compatible) for text + vision
-- Ollama for final flyer images (default)
-- Postgres for persistence
+- Provider-pluggable background generation (Ollama/SDXL/OpenAI/ComfyUI-bg)
+- Deterministic text overlay with brand kits
+- Postgres-backed async run queue + worker
 - On-disk output storage under `output/`
 
 ## Quick Start
@@ -22,7 +23,7 @@ psql "$DATABASE_URL" -f backend/sql/schema.sql
 ```
 
 ```bash
-uv run scripts/generate_flyer.py
+uv run scripts/run_creative_worker.py
 ```
 
 ## Frontend
@@ -40,8 +41,33 @@ bun run dev
 
 ## Notes
 - Configure `.env` from `backend/.env.example`.
-- Persistence is optional and controlled by env flags.
-- Image generation defaults to Ollama.
+- Canonical API is async run-based under `/api/v1/creative-runs`.
+- Worker process is required for queued run execution.
+- Image generation defaults to Ollama + deterministic overlays.
+
+## Canonical MVP Flow
+1. `POST /api/v1/creative-runs` to enqueue a run.
+2. Worker processes queued runs (`uv run scripts/run_creative_worker.py`).
+3. Poll `GET /api/v1/creative-runs/{run_id}` until terminal status.
+4. Fetch generated files via `/files/*`.
+
+### Endpoints
+- `POST /api/v1/creative-runs`
+- `GET /api/v1/creative-runs/{run_id}`
+- `GET /api/v1/creative-runs/{run_id}/files`
+- Compatibility shim (temporary): `POST /api/generate`
+
+### Worker
+Run locally from `backend/`:
+```bash
+uv run scripts/run_creative_worker.py
+```
+
+Worker env knobs:
+```bash
+HYPERLOCAL_CREATIVE_RUN_POLL_INTERVAL=2
+HYPERLOCAL_CREATIVE_RUN_MAX_CONCURRENT=1
+```
 
 ## Local LLM (vllm-mlx)
 Install and run the local LLM server:
@@ -108,3 +134,7 @@ Workflow placeholders (use these tokens in the JSON):
 - `{{BUSINESS_BLOCK}}`, `{{AUDIENCE}}`
 - `{{PALETTE}}`, `{{STYLE_KEYWORDS}}`, `{{LAYOUT_GUIDANCE}}`
 - `{{BUSINESS_NAME}}`, `{{PRODUCT}}`, `{{OFFER}}`, `{{CONSTRAINTS}}`
+
+## Deprecated Script Flows
+Legacy script flows were moved to `backend/scripts/archive/` and replaced with deprecation wrappers.  
+See `backend/scripts/archive/README.md` for replacement commands.

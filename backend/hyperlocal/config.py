@@ -47,6 +47,8 @@ class RuntimeConfig:
     variants: int = int(os.getenv("HYPERLOCAL_VARIANTS", "1"))
     persist_enabled: bool = os.getenv("HYPERLOCAL_PERSIST_ENABLED", "0") == "1"
     database_url: str | None = os.getenv("DATABASE_URL")
+    creative_run_poll_interval: float = float(os.getenv("HYPERLOCAL_CREATIVE_RUN_POLL_INTERVAL", "2"))
+    creative_run_max_concurrent: int = int(os.getenv("HYPERLOCAL_CREATIVE_RUN_MAX_CONCURRENT", "1"))
     typst_bin: str = os.getenv("TYPST_BIN", "typst")
 
 

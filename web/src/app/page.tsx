@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Fraunces, Space_Grotesk } from "next/font/google";
 
 const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk" });
@@ -71,14 +71,23 @@ const presets = {
 
 type PresetKey = keyof typeof presets;
 
-type Result = {
-  output_dir: string;
-  variants: Array<{
-    index: number;
-    image_path: string;
-    qc_passed: boolean;
-    qc_text?: string | null;
-  }>;
+type Artifact = {
+  variant_index: number;
+  prompt_slug: string;
+  background_image_url: string;
+  final_image_url: string;
+  overlay_template: string;
+};
+
+type RunStatus = {
+  run_id: number;
+  status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+  stage: string;
+  progress_pct: number;
+  error?: string | null;
+  output_dir?: string | null;
+  manifest_url?: string | null;
+  artifacts: Artifact[];
 };
 
 export default function Home() {
@@ -86,7 +95,9 @@ export default function Home() {
   const [form, setForm] = useState(presets.smoothie);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<Result | null>(null);
+  const [result, setResult] = useState<RunStatus | null>(null);
+  const [runId, setRunId] = useState<number | null>(null);
+  const [runStage, setRunStage] = useState<string | null>(null);
 
   const apiBase =
     process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
@@ -96,11 +107,16 @@ export default function Home() {
     setPreset(key);
     setForm(presets[key]);
     setResult(null);
+    setRunId(null);
+    setRunStage(null);
   };
 
   const resolveImageUrl = (path: string) => {
     if (path.startsWith("http://") || path.startsWith("https://")) {
       return path;
+    }
+    if (path.startsWith("/files/")) {
+      return `${apiBase}${path}`;
     }
     if (path.startsWith("s3://")) {
       return "";
@@ -112,14 +128,35 @@ export default function Home() {
     return `${apiBase}/files/${withoutOutput}`;
   };
 
+  const pollRunStatus = async (id: number): Promise<RunStatus> => {
+    for (;;) {
+      const response = await fetch(`${apiBase}/api/v1/creative-runs/${id}`, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || "Failed to poll run status");
+      }
+      const status = (await response.json()) as RunStatus;
+      setRunStage(`${status.stage} (${status.progress_pct}%)`);
+      setResult(status);
+      if (["SUCCEEDED", "FAILED", "CANCELED"].includes(status.status)) {
+        return status;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+  };
+
   const onSubmit = async () => {
     setLoading(true);
     setError(null);
     setResult(null);
+    setRunId(null);
+    setRunStage("queued (0%)");
     try {
+      const businessKind = preset === "hvac" ? "hvac" : "smoothie";
       const payload = {
-        campaign_id: form.campaignId,
-        business_details: {
+        business: {
           name: form.name,
           website: form.website,
           address: form.address,
@@ -127,34 +164,51 @@ export default function Home() {
           state: form.state,
           postal_code: form.postal,
           phone: form.phone,
-          hours: {
-            display: form.hours,
-            timezone: "America/Chicago",
-          },
           service_area: form.serviceArea,
         },
-        product: form.product,
-        offer: form.offer,
-        tone: form.tone,
-        cta: form.cta,
-        size: "6x9",
-        audience: form.audience,
-        constraints: form.constraints
-          .split("\n")
-          .map((item) => item.trim())
-          .filter(Boolean),
-        brand_colors: form.brandColors
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean),
-        style_keywords: form.styleKeywords
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean),
-        reference_images: [],
+        campaign: {
+          campaign_id: form.campaignId,
+          business_kind: businessKind,
+          product: form.product,
+          offer: form.offer,
+          cta: form.cta,
+          audience: form.audience,
+          tone: form.tone,
+          constraints: form.constraints
+            .split("\n")
+            .map((item) => item.trim())
+            .filter(Boolean),
+          brand_colors: form.brandColors
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean),
+          style_keywords: form.styleKeywords
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean),
+          format_hint: "flyer_poster",
+        },
+        generation: {
+          count: 2,
+          images_per_prompt: 2,
+          prompt_engine: "llm",
+          background_provider: "ollama",
+        },
+        overlay: {
+          brand_kit:
+            businessKind === "hvac"
+              ? "config/brand_kits/hvac_default.json"
+              : "config/brand_kits/smoothie_default.json",
+          template_mode: "cycle",
+          seed: 42,
+          copy_mode: "auto",
+        },
+        output: {
+          subdir: "creative_runs",
+        },
       };
 
-      const response = await fetch(`${apiBase}/api/generate`, {
+      const response = await fetch(`${apiBase}/api/v1/creative-runs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -163,8 +217,15 @@ export default function Home() {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.detail || "Failed to generate flyer");
       }
-      const data = (await response.json()) as Result;
-      setResult(data);
+      const data = (await response.json()) as {
+        run_id: number;
+        status: string;
+      };
+      setRunId(data.run_id);
+      const finalStatus = await pollRunStatus(data.run_id);
+      if (finalStatus.status !== "SUCCEEDED") {
+        throw new Error(finalStatus.error || `Run ${finalStatus.status.toLowerCase()}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -303,21 +364,26 @@ export default function Home() {
               Results appear here after generation. Images are served from the
               backend container.
             </p>
+            {runId !== null && (
+              <p className="mt-2 text-xs text-zinc-500">
+                Run #{runId} {runStage ? `- ${runStage}` : ""}
+              </p>
+            )}
           </div>
 
           {result ? (
             <div className="grid gap-6 lg:grid-cols-2">
-              {result.variants.map((variant) => {
-                const imageUrl = resolveImageUrl(variant.image_path);
+              {result.artifacts.map((artifact) => {
+                const imageUrl = resolveImageUrl(artifact.final_image_url);
                 return (
                   <div
-                    key={variant.index}
+                    key={artifact.variant_index}
                     className="rounded-3xl border border-black/10 bg-white/80 p-4 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.6)]"
                   >
                     {imageUrl ? (
                       <img
                         src={imageUrl}
-                        alt={`Variant ${variant.index}`}
+                        alt={`Variant ${artifact.variant_index}`}
                         className="w-full rounded-2xl border border-black/10"
                       />
                     ) : (
@@ -326,13 +392,8 @@ export default function Home() {
                       </div>
                     )}
                     <div className="mt-3 text-xs text-zinc-600">
-                      QC: {variant.qc_passed ? "PASS" : "FAIL"}
+                      Template: {artifact.overlay_template}
                     </div>
-                    {variant.qc_text && (
-                      <pre className="mt-2 max-h-36 overflow-auto rounded-xl bg-black/90 p-3 text-[11px] text-emerald-100">
-                        {variant.qc_text}
-                      </pre>
-                    )}
                   </div>
                 );
               })}

@@ -1,17 +1,28 @@
 CREATE TABLE IF NOT EXISTS creative_runs (
   id SERIAL PRIMARY KEY,
   campaign_id INTEGER,
-  status VARCHAR(32) NOT NULL DEFAULT 'RUNNING',
+  status VARCHAR(32) NOT NULL DEFAULT 'QUEUED',
+  stage VARCHAR(64) NOT NULL DEFAULT 'queued',
+  progress_pct INTEGER NOT NULL DEFAULT 0,
+  request_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+  pipeline_version TEXT,
+  output_dir TEXT,
+  manifest_path TEXT,
   brief_json JSONB NOT NULL DEFAULT '{}'::jsonb,
   brand_style_json JSONB NOT NULL DEFAULT '{}'::jsonb,
   model_versions_json JSONB NOT NULL DEFAULT '{}'::jsonb,
   error TEXT,
+  started_at TIMESTAMPTZ,
+  finished_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_creative_runs_campaign_created
   ON creative_runs (campaign_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_creative_runs_status_created
+  ON creative_runs (status, created_at ASC);
 
 CREATE TABLE IF NOT EXISTS creative_variants (
   id SERIAL PRIMARY KEY,
@@ -20,6 +31,9 @@ CREATE TABLE IF NOT EXISTS creative_variants (
   copy_json JSONB NOT NULL DEFAULT '{}'::jsonb,
   prompt_text TEXT NOT NULL,
   negative_prompt TEXT NOT NULL,
+  background_image_url TEXT,
+  overlay_template TEXT,
+  final_image_url TEXT,
   image_url TEXT,
   qc_passed BOOLEAN NOT NULL DEFAULT false,
   qc_text TEXT,
