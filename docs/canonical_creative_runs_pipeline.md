@@ -31,7 +31,6 @@ Contains:
 - `POST /api/v1/creative-runs`
 - `GET /api/v1/creative-runs/{run_id}`
 - `GET /api/v1/creative-runs/{run_id}/files`
-- Temporary compatibility shim: `POST /api/generate`
 
 ## Worker
 
@@ -47,7 +46,3 @@ Optional env knobs:
 HYPERLOCAL_CREATIVE_RUN_POLL_INTERVAL=2
 HYPERLOCAL_CREATIVE_RUN_MAX_CONCURRENT=1
 ```
-
-## Deprecated scripts
-
-Deprecated script flows were moved under `backend/scripts/archive/` and wrappers now print replacement commands.

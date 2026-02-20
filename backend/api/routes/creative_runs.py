@@ -77,15 +77,14 @@ def get_creative_run_status(run_id: int) -> CreativeRunStatusResponse:
     variants = manager.get_variants(run_id)
     artifacts: list[CreativeArtifact] = []
     for variant in variants:
-        final_image = variant.final_image_url or variant.image_url
-        if not final_image:
+        if not variant.final_image_url:
             continue
         artifacts.append(
             CreativeArtifact(
                 variant_index=variant.variant_index,
                 prompt_slug=f"variant_{variant.variant_index:03d}",
                 background_image_url=variant.background_image_url or "",
-                final_image_url=final_image,
+                final_image_url=variant.final_image_url,
                 overlay_template=variant.overlay_template or "base",
             )
         )

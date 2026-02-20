@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Optional
 
 from sqlalchemy import select
 
 from hyperlocal.models import CreativeAsset, CreativeRun, CreativeVariant
-from hyperlocal.schemas import BrandStyle, CopyVariant, CreativeBrief
+from hyperlocal.schemas import CopyVariant
 
 
 @dataclass
@@ -19,8 +18,6 @@ class PersistedVariant:
 class PersistenceManager:
     def __init__(self, session_factory) -> None:
         self._session_factory = session_factory
-
-    # --- New canonical creative-runs methods ---
 
     def create_run_request(
         self,
@@ -39,8 +36,6 @@ class PersistenceManager:
                 progress_pct=0,
                 request_json=request_payload,
                 pipeline_version=pipeline_version,
-                brief_json=request_payload,
-                model_versions_json={"pipeline_version": pipeline_version},
             )
             session.add(run)
             session.commit()
@@ -220,91 +215,6 @@ class PersistenceManager:
                 return
             variant.final_image_url = final_image_url
             variant.overlay_template = overlay_template
-            variant.image_url = final_image_url  # compatibility with existing readers
-            session.commit()
-
-    # --- Existing methods kept for compatibility ---
-
-    def create_run(
-        self,
-        brief: CreativeBrief,
-        model_versions: dict,
-        status: str = "RUNNING",
-    ) -> CreativeRun:
-        with self._session_factory() as session:
-            run = CreativeRun(
-                campaign_id=brief.campaign_id,
-                status=status,
-                stage="legacy",
-                progress_pct=0,
-                brief_json=brief.model_dump(),
-                request_json=brief.model_dump(),
-                model_versions_json=model_versions,
-            )
-            session.add(run)
-            session.commit()
-            session.refresh(run)
-            return run
-
-    def update_run_style(self, run_id: int, style: BrandStyle) -> None:
-        with self._session_factory() as session:
-            run = session.get(CreativeRun, run_id)
-            if not run:
-                return
-            run.brand_style_json = style.model_dump()
-            session.commit()
-
-    def update_run_status(self, run_id: int, status: str, error: str | None = None) -> None:
-        with self._session_factory() as session:
-            run = session.get(CreativeRun, run_id)
-            if not run:
-                return
-            run.status = status
-            run.error = error
-            if status in {"FAILED", "SUCCEEDED", "COMPLETE"}:
-                run.finished_at = datetime.now(timezone.utc)
-            session.commit()
-
-    def create_variant(
-        self,
-        run_id: int,
-        variant_index: int,
-        copy: CopyVariant,
-        prompt_text: str,
-        negative_prompt: str,
-    ) -> PersistedVariant:
-        return self.create_or_update_variant(
-            run_id=run_id,
-            variant_index=variant_index,
-            copy=copy,
-            prompt_text=prompt_text,
-            negative_prompt=negative_prompt,
-            background_image_url=None,
-        )
-
-    def update_variant_image(self, variant_id: int, image_url: str) -> None:
-        with self._session_factory() as session:
-            variant = session.get(CreativeVariant, variant_id)
-            if not variant:
-                return
-            variant.image_url = image_url
-            variant.final_image_url = image_url
-            session.commit()
-
-    def update_variant_qc(
-        self,
-        variant_id: int,
-        qc_passed: bool,
-        qc_text: str | None = None,
-        qc_score: float | None = None,
-    ) -> None:
-        with self._session_factory() as session:
-            variant = session.get(CreativeVariant, variant_id)
-            if not variant:
-                return
-            variant.qc_passed = qc_passed
-            variant.qc_text = qc_text
-            variant.qc_score = qc_score
             session.commit()
 
     def create_asset_from_variant(
@@ -313,7 +223,7 @@ class PersistenceManager:
         run_id: int,
         variant_id: int,
         image_url: str,
-        copy_text: Optional[str],
+        copy_text: str | None,
     ) -> CreativeAsset:
         with self._session_factory() as session:
             asset = CreativeAsset(

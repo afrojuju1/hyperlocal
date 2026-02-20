@@ -16,8 +16,7 @@ Examples:
     uv run scripts/generate_ad_creatives.py --business-kind hvac --count 3 --engine llm --format-hint flyer_poster --text-mode overlay --out-subdir hvac_ad_creatives --image-model x/flux2-klein:latest
 
 Notes:
-  For ComfyUI-ready flyers with deterministic text overlay, use:
-    uv run scripts/generate_comfyui_flyers.py
+  Canonical production flow is API + worker (`/api/v1/creative-runs` + `run_creative_worker.py`).
 """
 
 import argparse

@@ -30,21 +30,24 @@ def build_sessionmaker(database_url: str | None = None):
 
 def _apply_sql_patches(engine) -> None:
     """
-    Best-effort schema patching for existing DBs that predate the canonical
-    creative-runs pipeline columns.
+    Best-effort schema patching for existing DBs using ordered SQL migration files.
     """
-    migration_file = (
+    migrations_dir = (
         Path(__file__).resolve().parents[1]
         / "sql"
         / "migrations"
-        / "0002_creative_runs_v1.sql"
     )
-    if not migration_file.exists():
+    if not migrations_dir.exists() or not migrations_dir.is_dir():
         return
-    sql = migration_file.read_text(encoding="utf-8")
-    if not sql.strip():
-        return
-    statements = [stmt.strip() for stmt in sql.split(";") if stmt.strip()]
+    migration_files = sorted(
+        path for path in migrations_dir.iterdir()
+        if path.is_file() and path.suffix.lower() == ".sql"
+    )
     with engine.begin() as conn:
-        for statement in statements:
-            conn.execute(text(statement))
+        for migration_file in migration_files:
+            sql = migration_file.read_text(encoding="utf-8")
+            if not sql.strip():
+                continue
+            statements = [stmt.strip() for stmt in sql.split(";") if stmt.strip()]
+            for statement in statements:
+                conn.execute(text(statement))

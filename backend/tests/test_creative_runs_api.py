@@ -30,7 +30,6 @@ class FakeVariant:
     final_image_url: str
     overlay_template: str
     background_image_url: str | None = None
-    image_url: str | None = None
 
 
 class FakeManager:

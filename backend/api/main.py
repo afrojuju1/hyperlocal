@@ -8,7 +8,6 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 from api.routes.creative_runs import router as creative_runs_router
-from api.routes.generate import router as generate_router
 from hyperlocal.config import RUNTIME_CONFIG
 from hyperlocal.db import init_db
 from hyperlocal.health import run_health_checks
@@ -32,7 +31,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(generate_router)
 app.include_router(creative_runs_router)
 
 app.mount("/files", StaticFiles(directory=output_dir), name="files")
