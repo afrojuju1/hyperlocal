@@ -72,8 +72,19 @@ def build_comfyui_config(
     )
 
 
+def _resolve_workflow_path(path: str) -> Path:
+    workflow_path = Path(path)
+    if workflow_path.exists():
+        return workflow_path
+    repo_root = Path(__file__).resolve().parents[2]
+    repo_candidate = repo_root / workflow_path
+    if repo_candidate.exists():
+        return repo_candidate
+    raise FileNotFoundError(f"ComfyUI workflow not found: {path}")
+
+
 def _render_workflow_template(path: str, values: dict[str, Any]) -> dict[str, Any]:
-    text = Path(path).read_text(encoding="utf-8")
+    text = _resolve_workflow_path(path).read_text(encoding="utf-8")
     for key, value in values.items():
         token = f"{{{{{key}}}}}"
         if token not in text:

@@ -154,7 +154,10 @@ class BackgroundGenerationService:
         if request.generation.prompt_engine == "template":
             specs = build_template_prompts(**params)
         else:
-            specs = build_llm_prompts(**params)
+            try:
+                specs = build_llm_prompts(**params)
+            except Exception:
+                specs = build_template_prompts(**params)
         if not specs:
             raise RuntimeError("Prompt generation returned zero prompt specs")
         return specs
@@ -164,6 +167,8 @@ class BackgroundGenerationService:
         if not model:
             if request.generation.background_provider == "ollama":
                 model = RUNTIME_CONFIG.ollama_image_model
+            elif request.generation.background_provider == "comfyui_bg":
+                model = Path(RUNTIME_CONFIG.comfyui_workflow_path).name
             else:
                 model = RUNTIME_CONFIG.image_model
         return {

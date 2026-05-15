@@ -29,16 +29,7 @@ def _check_llm_url(name: str, base_url: str) -> HealthCheck:
 
 
 def _check_llm() -> list[HealthCheck]:
-    text_base = resolve_llm_base_url("text").rstrip("/")
-    vision_base = resolve_llm_base_url("vision").rstrip("/")
-    unique = {text_base, vision_base}
-    if len(unique) == 1:
-        base_url = unique.pop()
-        return [_check_llm_url("llm", base_url)]
-    return [
-        _check_llm_url("llm_text", text_base),
-        _check_llm_url("llm_vision", vision_base),
-    ]
+    return [_check_llm_url("llm", resolve_llm_base_url().rstrip("/"))]
 
 
 def _check_sdxl() -> HealthCheck:
@@ -70,7 +61,7 @@ def run_health_checks() -> dict[str, Any]:
     provider = RUNTIME_CONFIG.image_provider.lower()
     if provider == "sdxl":
         checks.append(_check_sdxl())
-    elif provider == "comfyui":
+    elif provider in {"comfyui", "comfyui_bg"}:
         checks.append(_check_comfyui())
     overall = all(check.ok for check in checks)
     return {

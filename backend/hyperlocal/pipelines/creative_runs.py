@@ -46,6 +46,7 @@ class CreativeRunPipeline:
         copy_blocks = self._copy_generation.generate(normalized, normalized.generation.count)
 
         self._persistence.update_run_progress(run_id, stage="prompt_generation", progress_pct=30)
+        self._persistence.update_run_progress(run_id, stage="background_render", progress_pct=45)
         backgrounds = self._background_generation.generate(request=normalized, run_dir=run_dir)
 
         for bg in backgrounds:

@@ -51,7 +51,7 @@ REQUEST_PAYLOAD = {
         "count": 1,
         "images_per_prompt": 1,
         "prompt_engine": "template",
-        "background_provider": "ollama",
+        "background_provider": "comfyui_bg",
     },
     "overlay": {
         "brand_kit": "config/brand_kits/smoothie_default.json",

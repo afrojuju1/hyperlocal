@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Fraunces, Space_Grotesk } from "next/font/google";
+import Image from "next/image";
 
 const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk" });
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces" });
@@ -70,6 +71,24 @@ const presets = {
 };
 
 type PresetKey = keyof typeof presets;
+type EditableFieldKey = Exclude<keyof typeof presets.smoothie, "campaignId">;
+
+const formFields: ReadonlyArray<{ label: string; key: EditableFieldKey }> = [
+  { label: "Business Name", key: "name" },
+  { label: "Website", key: "website" },
+  { label: "Address", key: "address" },
+  { label: "City", key: "city" },
+  { label: "State", key: "state" },
+  { label: "Postal Code", key: "postal" },
+  { label: "Phone", key: "phone" },
+  { label: "Hours", key: "hours" },
+  { label: "Service Area", key: "serviceArea" },
+  { label: "Product", key: "product" },
+  { label: "Offer", key: "offer" },
+  { label: "Tone", key: "tone" },
+  { label: "CTA", key: "cta" },
+  { label: "Audience", key: "audience" },
+];
 
 type Artifact = {
   variant_index: number;
@@ -192,7 +211,7 @@ export default function Home() {
           count: 2,
           images_per_prompt: 2,
           prompt_engine: "llm",
-          background_provider: "ollama",
+          background_provider: "comfyui_bg",
         },
         overlay: {
           brand_kit:
@@ -274,27 +293,12 @@ export default function Home() {
           </div>
 
           <div className="space-y-3">
-            {[
-              ["Business Name", "name"],
-              ["Website", "website"],
-              ["Address", "address"],
-              ["City", "city"],
-              ["State", "state"],
-              ["Postal Code", "postal"],
-              ["Phone", "phone"],
-              ["Hours", "hours"],
-              ["Service Area", "serviceArea"],
-              ["Product", "product"],
-              ["Offer", "offer"],
-              ["Tone", "tone"],
-              ["CTA", "cta"],
-              ["Audience", "audience"],
-            ].map(([label, key]) => (
+            {formFields.map(({ label, key }) => (
               <label key={key} className="text-xs uppercase tracking-wide">
                 <span className="text-zinc-500">{label}</span>
                 <input
                   className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-zinc-900"
-                  value={(form as any)[key]}
+                  value={form[key]}
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, [key]: event.target.value }))
                   }
@@ -381,9 +385,12 @@ export default function Home() {
                     className="rounded-3xl border border-black/10 bg-white/80 p-4 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.6)]"
                   >
                     {imageUrl ? (
-                      <img
+                      <Image
                         src={imageUrl}
                         alt={`Variant ${artifact.variant_index}`}
+                        width={1024}
+                        height={1536}
+                        unoptimized
                         className="w-full rounded-2xl border border-black/10"
                       />
                     ) : (

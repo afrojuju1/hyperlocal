@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   backend:
     build:
@@ -10,25 +8,21 @@ services:
       DATABASE_URL: postgresql+psycopg://hyperlocal:hyperlocal@db:5432/hyperlocal
       HYPERLOCAL_PERSIST_ENABLED: "1"
       HYPERLOCAL_STORAGE_ENABLED: "0"
-      HYPERLOCAL_LLM_PROVIDER: vllm_mlx
-      HYPERLOCAL_LLM_API_KEY: not-needed
-      HYPERLOCAL_TEXT_BASE_URL: http://host.docker.internal:11435/v1
-      HYPERLOCAL_VISION_BASE_URL: http://host.docker.internal:11436/v1
-      HYPERLOCAL_TEXT_MODEL: default
-      HYPERLOCAL_VISION_MODEL: default
-      HYPERLOCAL_IMAGE_PROVIDER: sdxl
-      SDXL_API_URL: http://sdxl:17860/sdapi/v1/txt2img
-      HYPERLOCAL_IMAGE_SIZE: "1024x1024"
-      SDXL_STEPS: "2"
-      SDXL_CFG_SCALE: "0"
+      HYPERLOCAL_LLM_PROVIDER: ollama
+      OLLAMA_BASE_URL: http://100.111.132.114:11434/v1
+      OLLAMA_API_KEY: ollama
+      HYPERLOCAL_TEXT_MODEL: qwen3:8b
+      HYPERLOCAL_IMAGE_PROVIDER: comfyui_bg
+      COMFYUI_API_URL: http://100.111.132.114:8188
+      COMFYUI_WORKFLOW_PATH: comfyui/workflows/z_image_turbo_background.json
+      COMFYUI_OUTPUT_NODE: "10"
+      HYPERLOCAL_IMAGE_SIZE: "1024x1536"
     ports:
       - "18000:8000"
     volumes:
       - ./output:/app/output
     depends_on:
       db:
-        condition: service_started
-      sdxl:
         condition: service_started
 
   creative-worker:
@@ -39,17 +33,15 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://hyperlocal:hyperlocal@db:5432/hyperlocal
       HYPERLOCAL_PERSIST_ENABLED: "1"
-      HYPERLOCAL_LLM_PROVIDER: vllm_mlx
-      HYPERLOCAL_LLM_API_KEY: not-needed
-      HYPERLOCAL_TEXT_BASE_URL: http://host.docker.internal:11435/v1
-      HYPERLOCAL_VISION_BASE_URL: http://host.docker.internal:11436/v1
-      HYPERLOCAL_TEXT_MODEL: default
-      HYPERLOCAL_VISION_MODEL: default
-      HYPERLOCAL_IMAGE_PROVIDER: sdxl
-      SDXL_API_URL: http://sdxl:17860/sdapi/v1/txt2img
+      HYPERLOCAL_LLM_PROVIDER: ollama
+      OLLAMA_BASE_URL: http://100.111.132.114:11434/v1
+      OLLAMA_API_KEY: ollama
+      HYPERLOCAL_TEXT_MODEL: qwen3:8b
+      HYPERLOCAL_IMAGE_PROVIDER: comfyui_bg
+      COMFYUI_API_URL: http://100.111.132.114:8188
+      COMFYUI_WORKFLOW_PATH: comfyui/workflows/z_image_turbo_background.json
+      COMFYUI_OUTPUT_NODE: "10"
       HYPERLOCAL_IMAGE_SIZE: "1024x1536"
-      SDXL_STEPS: "2"
-      SDXL_CFG_SCALE: "0"
       HYPERLOCAL_CREATIVE_RUN_POLL_INTERVAL: "2"
       HYPERLOCAL_CREATIVE_RUN_MAX_CONCURRENT: "1"
     command: ["uv", "run", "scripts/run_creative_worker.py"]
@@ -57,8 +49,6 @@ services:
       - ./output:/app/output
     depends_on:
       db:
-        condition: service_started
-      sdxl:
         condition: service_started
 
   web:
@@ -73,30 +63,6 @@ services:
     depends_on:
       - backend
 
-  sdxl:
-    build:
-      context: .
-      dockerfile: sdxl/Dockerfile
-    container_name: hyperlocal-sdxl
-    environment:
-      SDXL_MODEL_ID: stabilityai/sdxl-turbo
-      SDXL_DEVICE: cpu
-      SDXL_DTYPE: float32
-      HF_HOME: /models/hf
-      HF_HUB_ENABLE_HF_TRANSFER: "1"
-      HF_TOKEN: ${HF_TOKEN}
-    ports:
-      - "17860:17860"
-    volumes:
-      - sdxl_hf_cache:/models/hf
-      - ./sdxl/models:/models
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:17860/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
-
-
   db:
     image: postgres:16
     container_name: hyperlocal-postgres
@@ -109,23 +75,5 @@ services:
     volumes:
       - hyperlocal_pgdata:/var/lib/postgresql/data
 
-  mlx-image:
-    profiles: ["mlx"]
-    build:
-      context: .
-      dockerfile: mlx/Dockerfile.cuda
-    container_name: hyperlocal-mlx-image
-    environment:
-      MLX_MODEL_TYPE: image-generation
-      MLX_MODEL_PATH: /models/flux
-      MLX_CONFIG_NAME: flux-krea-dev
-      MLX_PORT: "8000"
-    ports:
-      - "18002:8000"
-    volumes:
-      - mlx_models:/models
-
 volumes:
   hyperlocal_pgdata:
-  sdxl_hf_cache:
-  mlx_models:

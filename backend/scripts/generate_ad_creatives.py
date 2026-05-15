@@ -11,9 +11,9 @@ Examples:
     cd backend
     uv run scripts/generate_ad_creatives.py --business-kind smoothie --count 3 --engine llm --format-hint flyer_poster --text-mode overlay --out-subdir smoothie_ad_creatives
 
-  HVAC (3 prompts + 3 images), using Flux:
+  HVAC (3 prompts + 3 images), using the default remote ComfyUI backend:
     cd backend
-    uv run scripts/generate_ad_creatives.py --business-kind hvac --count 3 --engine llm --format-hint flyer_poster --text-mode overlay --out-subdir hvac_ad_creatives --image-model x/flux2-klein:latest
+    uv run scripts/generate_ad_creatives.py --business-kind hvac --count 3 --engine llm --format-hint flyer_poster --text-mode overlay --out-subdir hvac_ad_creatives --image-provider comfyui_bg
 
 Notes:
   Canonical production flow is API + worker (`/api/v1/creative-runs` + `run_creative_worker.py`).
@@ -33,6 +33,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from hyperlocal.comfyui_provider import build_comfyui_config, generate_comfyui_background_image
 from hyperlocal.config import MODEL_CONFIG, RUNTIME_CONFIG
 from hyperlocal.image_providers import (
     build_ollama_image_config,
@@ -61,7 +62,9 @@ def _normalize_provider(value: str) -> str:
         return "openai"
     if value in {"ollama"}:
         return "ollama"
-    raise ValueError("image provider must be one of: ollama, sdxl, openai")
+    if value in {"comfyui_bg", "comfyui"}:
+        return "comfyui_bg"
+    raise ValueError("image provider must be one of: comfyui_bg, ollama, sdxl, openai")
 
 
 def write_flat_files(run_dir: Path, *, specs: list[object], meta: dict) -> None:
@@ -109,7 +112,7 @@ def main() -> None:
     parser.add_argument("--offer", default=smoothie_default_offer)
     parser.add_argument(
         "--image-provider",
-        choices=["ollama", "sdxl", "openai"],
+        choices=["comfyui_bg", "ollama", "sdxl", "openai"],
         default=RUNTIME_CONFIG.image_provider.lower(),
     )
     parser.add_argument(
@@ -221,6 +224,33 @@ def main() -> None:
                     negative_prompt=spec.negative_prompt,
                     output_path=str(image_path),
                     config=config,
+                )
+
+    elif provider == "comfyui_bg":
+        config = build_comfyui_config(
+            api_url=RUNTIME_CONFIG.comfyui_api_url,
+            workflow_path=RUNTIME_CONFIG.comfyui_workflow_path,
+            size=RUNTIME_CONFIG.image_size,
+            timeout=RUNTIME_CONFIG.comfyui_timeout,
+            output_node=RUNTIME_CONFIG.comfyui_output_node,
+        )
+        meta["image_model"] = Path(RUNTIME_CONFIG.comfyui_workflow_path).name
+        (run_dir / "manifest.json").write_text(json.dumps(meta, indent=2) + "\n")
+        seq = 0
+        for i, spec in enumerate(specs, start=1):
+            for v in range(1, images_per_prompt + 1):
+                seq += 1
+                image_path = run_dir / f"{i:02d}__{spec.slug}__v{v:02d}.png"
+                print(
+                    f"Generating image {i}/{len(specs)} variation {v}/{images_per_prompt} -> {image_path}",
+                    flush=True,
+                )
+                generate_comfyui_background_image(
+                    prompt=spec.prompt,
+                    negative_prompt=spec.negative_prompt,
+                    output_path=str(image_path),
+                    config=config,
+                    seed=42 + seq,
                 )
 
     else:  # openai

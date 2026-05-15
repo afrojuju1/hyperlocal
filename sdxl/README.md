@@ -1,7 +1,8 @@
 # SDXL Local Models
 
-This directory stores local SDXL assets. The default flow uses a lightweight
-FastAPI server powered by Diffusers.
+This directory stores optional local SDXL assets. The default Hyperlocal image
+path now uses NucBox ComfyUI/Z-Image Turbo; this server is only for explicit
+local SDXL experiments.
 
 ## Local SDXL Server
 ```bash
@@ -39,12 +40,6 @@ uv sync
 export HF_TOKEN=... # optional, but avoids rate limits
 export HF_HOME="$(pwd)/models/hf"
 uv run hf download stabilityai/sdxl-turbo
-```
-
-Docker prefetch (uses the `sdxl_hf_cache` volume):
-```bash
-export HF_TOKEN=... # optional, but avoids rate limits
-docker compose run --rm -e HF_TOKEN="$HF_TOKEN" sdxl hf download stabilityai/sdxl-turbo
 ```
 
 ## Local Models

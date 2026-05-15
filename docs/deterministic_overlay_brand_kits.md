@@ -4,6 +4,18 @@ Use this when you want exact copy every time (no misspellings from in-image text
 
 ## 1) Generate text-free backgrounds
 
+The canonical path is the creative-runs worker with remote NucBox ComfyUI:
+
+```bash
+HYPERLOCAL_IMAGE_PROVIDER=comfyui_bg
+COMFYUI_API_URL=http://100.111.132.114:8188
+COMFYUI_WORKFLOW_PATH=comfyui/workflows/z_image_turbo_background.json
+COMFYUI_OUTPUT_NODE=10
+uv run scripts/run_creative_worker.py
+```
+
+For one-off background experiments, the older prompt script can still be used with explicit provider flags.
+
 From `backend/`:
 
 ```bash
@@ -17,8 +29,7 @@ uv run scripts/generate_ad_creatives.py \
   --business-name "Sunset Smoothie Co." \
   --product "Mango smoothie" \
   --offer "BUY 1 GET 1 50% OFF MANGO SMOOTHIES" \
-  --image-provider ollama \
-  --image-model x/flux2-klein:latest \
+  --image-provider comfyui_bg \
   --out-subdir smoothie_llm_bogo_overlay
 ```
 

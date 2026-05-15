@@ -8,7 +8,7 @@ This repository now has one canonical generation flow:
    - normalize input
    - copy generation (`auto` or provided)
    - prompt generation for text-free backgrounds
-   - background rendering (`ollama | sdxl | openai | comfyui_bg`)
+   - background rendering (`comfyui_bg` default; `ollama | sdxl | openai` remain optional providers)
    - deterministic overlay rendering (brand kit templates)
    - persistence + manifest
 4. Poll `GET /api/v1/creative-runs/{run_id}` until `SUCCEEDED | FAILED | CANCELED`.
@@ -45,4 +45,12 @@ Optional env knobs:
 ```bash
 HYPERLOCAL_CREATIVE_RUN_POLL_INTERVAL=2
 HYPERLOCAL_CREATIVE_RUN_MAX_CONCURRENT=1
+HYPERLOCAL_LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://100.111.132.114:11434/v1
+OLLAMA_API_KEY=ollama
+HYPERLOCAL_TEXT_MODEL=qwen3:8b
+HYPERLOCAL_IMAGE_PROVIDER=comfyui_bg
+COMFYUI_API_URL=http://100.111.132.114:8188
+COMFYUI_WORKFLOW_PATH=comfyui/workflows/z_image_turbo_background.json
+COMFYUI_OUTPUT_NODE=10
 ```

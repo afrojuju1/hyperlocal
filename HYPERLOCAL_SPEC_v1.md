@@ -2,9 +2,9 @@
 
 **Project Codename:** Acre
 
-**Stack:** Python / FastAPI / arq / PostGIS / MLX
+**Stack:** Python / FastAPI / arq / PostGIS / Ollama / ComfyUI
 
-**Infrastructure:** Hetzner Dedicated (Cloud) + Apple M4 Max (Local Node)
+**Infrastructure:** Hetzner Dedicated (Cloud) + NucBox inference node
 
 ---
 
@@ -13,7 +13,7 @@
 Acre is a distributed asynchronous platform designed to bridge cloud-based geospatial logic with localized physical fulfillment. The system is split into two primary environments connected via a secure **Tailscale/Cloudflare Tunnel**.
 
 * **Cloud Layer (Hetzner):** Manages the web UI, PostGIS database, and the `arq` global task queue.
-* **Intelligence Layer (Local M4 Max):** Handles GPU-accelerated LLM inference for creative generation via **MLX**.
+* **Intelligence Layer (NucBox):** Handles local text generation via **Ollama** and background generation via **ComfyUI/Z-Image Turbo**.
 * **Fulfillment Layer (Print Node):** Local hardware agent polling for `READY_TO_PRINT` jobs.
 
 ---
@@ -23,7 +23,7 @@ Acre is a distributed asynchronous platform designed to bridge cloud-based geosp
 * **Backend:** Python 3.12+ / FastAPI.
 * **Task Orchestration:** `arq` (Redis-backed, native `asyncio`).
 * **Geospatial DB:** PostgreSQL 16 + **PostGIS 3.4**.
-* **Intelligence:** Llama 3.1 8B (via `mlx-lm`) + Ollama image generation (local, default).
+* **Intelligence:** Ollama text generation + ComfyUI/Z-Image Turbo background generation on the NucBox.
 * **PDF Engine:** `Typst` (Rust-based) for millisecond PDF compilation.
 
 ---
@@ -37,14 +37,14 @@ The engine identifies USPS Carrier Routes by intersecting a user-defined radius 
 * **Query Logic:** Uses `ST_DWithin` on indexed geometry for sub-millisecond lookups.
 * **Filter:** Excludes non-residential and P.O. Box routes to ensure 100% home delivery.
 
-### B. The Intelligence Node (M4 Max)
+### B. The Intelligence Node (NucBox)
 
 Triggered by an `arq` worker when a user requests "Generate Design."
 
 1. **Context Scraper:** Pulls brand colors/logos from the user's URL.
-2. **MLX Inference:** Local Llama 3.1 generates 3 variations of high-conversion ad copy.
-3. **Image Synthesis:** Ollama image generation produces background assets (SDXL optional).
-4. **Zero-Cost:** By running compute on local Apple Silicon, Acre eliminates OpenAI/Anthropic API overhead.
+2. **Ollama Inference:** NucBox Ollama generates high-conversion ad copy.
+3. **Image Synthesis:** NucBox ComfyUI/Z-Image Turbo produces text-free background assets.
+4. **Local Compute:** The canonical path avoids hosted image or LLM APIs for routine flyer generation.
 
 ### C. The Fulfillment Node (Local Agent)
 
@@ -79,6 +79,6 @@ Scaling is achieved by adding **Parallel Machine Units** to existing nodes rathe
 ## 6. Connectivity & Security
 
 * **Networking:** All local nodes connect to the Hetzner backend via **Tailscale Funnel**, ensuring no open ports.
-* **Data:** All PII (Personally Identifiable Information) is encrypted at rest on Hetzner; LLM inference remains strictly local to the M4 Max.
+* **Data:** All PII (Personally Identifiable Information) is encrypted at rest on Hetzner; default LLM and image inference remains on the private NucBox node.
 
 ---

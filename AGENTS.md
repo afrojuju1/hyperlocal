@@ -2,8 +2,8 @@
 
 ## Project Summary
 Hyperlocal is a flyer-generation pipeline that uses:
-- Local vLLM-MLX (OpenAI-compatible) for text + vision
-- Ollama for the final flyer image (default)
+- Remote NucBox Ollama (OpenAI-compatible) for text generation
+- Remote NucBox ComfyUI/Z-Image Turbo for background image generation (default)
 - Postgres for persistence
 - On-disk output storage under `output/`
 
@@ -33,7 +33,6 @@ docker compose up -d
 
 ## Ports (Docker)
 - Postgres: `55432`
-- Redis: `16379`
 - Backend API: `18000`
 - Frontend: `13000`
 
@@ -44,19 +43,25 @@ psql "$DATABASE_URL" -f backend/sql/schema.sql
 
 ## Run Flyer Generation
 ```bash
-uv run scripts/generate_flyer.py
+uv run scripts/run_creative_worker.py
 ```
 
 ## Environment
 Use `.env` (see `backend/.env.example`) and set at minimum:
 - `DATABASE_URL`
-- `SDXL_API_URL` (if using local SDXL, Docker host port defaults to 17860)
-- `OLLAMA_IMAGE_MODEL` (if using Ollama image generation, e.g. `x/flux2-klein`)
+- `OLLAMA_BASE_URL` (NucBox default: `http://100.111.132.114:11434/v1`)
+- `HYPERLOCAL_TEXT_MODEL` (default: `qwen3:8b`)
+- `COMFYUI_API_URL` (NucBox default: `http://100.111.132.114:8188`)
+- `COMFYUI_WORKFLOW_PATH` (default: `comfyui/workflows/z_image_turbo_background.json`)
+
+## Text Generation
+- Default provider is remote NucBox Ollama via `HYPERLOCAL_LLM_PROVIDER=ollama`.
+- The canonical Docker path uses `OLLAMA_BASE_URL=http://100.111.132.114:11434/v1`.
 
 ## Image Generation
-- Default provider is Ollama via `HYPERLOCAL_IMAGE_PROVIDER=ollama` and `OLLAMA_IMAGE_MODEL`.
-- To use SDXL, set `HYPERLOCAL_IMAGE_PROVIDER=sdxl` and `SDXL_API_URL` (run the local server in `sdxl/` on port `17860`).
-- To use OpenAI images, set `HYPERLOCAL_IMAGE_PROVIDER=openai` and `OPENAI_API_KEY`.
+- Default provider is remote ComfyUI via `HYPERLOCAL_IMAGE_PROVIDER=comfyui_bg`.
+- The canonical model files live on the NucBox under `~/ai/ComfyUI/models/`.
+- Optional providers remain available in code, but they are not part of the default Docker path.
 
 ## Persistence Flow
 - `creative_runs` stores the run + brief + model versions

@@ -1,8 +1,8 @@
 # Hyperlocal
 
 Hyperlocal is a canonical async creative-generation pipeline that combines:
-- Local vLLM-MLX (OpenAI-compatible) for text generation
-- Provider-pluggable background generation (`ollama`, `sdxl`, `openai`, `comfyui_bg`)
+- Remote NucBox Ollama (OpenAI-compatible) for text generation
+- Remote NucBox ComfyUI/Z-Image Turbo background generation (`comfyui_bg` default)
 - Deterministic text overlay with brand kits
 - Postgres-backed run queue + worker
 - On-disk output storage under `output/`
@@ -57,46 +57,32 @@ bun run dev
 - Worker process is required for queued run execution.
 - Output root: `backend/output/creative_runs/<run_id>/`.
 
-## Local LLM (vllm-mlx)
-Install and run local text/vision servers:
+## NucBox Ollama Text Generation
+
+Text and prompt generation use the NucBox Ollama OpenAI-compatible endpoint over Tailscale:
+
 ```bash
-uv tool install vllm-mlx
-mlx/run_mlx_servers.sh
+HYPERLOCAL_LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://100.111.132.114:11434/v1
+OLLAMA_API_KEY=ollama
+HYPERLOCAL_TEXT_MODEL=qwen3:8b
 ```
 
-Set backend to use vllm-mlx:
+Health check:
+
 ```bash
-HYPERLOCAL_LLM_PROVIDER=vllm_mlx
-HYPERLOCAL_TEXT_BASE_URL=http://localhost:11435/v1
-HYPERLOCAL_VISION_BASE_URL=http://localhost:11436/v1
-HYPERLOCAL_TEXT_MODEL=default
-HYPERLOCAL_VISION_MODEL=default
+curl http://100.111.132.114:11434/v1/models
 ```
 
-## Local SDXL (Optional)
-Run local SDXL server:
-```bash
-cd sdxl
-uv sync
-uv run uvicorn server:app --host 0.0.0.0 --port 17860
-```
+## NucBox ComfyUI Background Generation
 
-If backend runs outside Docker:
-```bash
-HYPERLOCAL_IMAGE_PROVIDER=sdxl
-SDXL_API_URL=http://localhost:17860/sdapi/v1/txt2img
-```
+Image generation runs on the NucBox over Tailscale.
 
-## Ollama Image Generation
-```bash
-HYPERLOCAL_IMAGE_PROVIDER=ollama
-OLLAMA_IMAGE_MODEL=x/flux2-klein
-```
-
-## ComfyUI Background Generation (Optional)
 ```bash
 HYPERLOCAL_IMAGE_PROVIDER=comfyui_bg
-COMFYUI_API_URL=http://localhost:8188
-COMFYUI_WORKFLOW_PATH=comfyui/workflows/flyer_full.json
-COMFYUI_OUTPUT_NODE=
+COMFYUI_API_URL=http://100.111.132.114:8188
+COMFYUI_WORKFLOW_PATH=comfyui/workflows/z_image_turbo_background.json
+COMFYUI_OUTPUT_NODE=10
 ```
+
+The NucBox ComfyUI service is `comfyui-rocm.service`.

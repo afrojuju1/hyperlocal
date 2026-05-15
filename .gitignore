@@ -1,8 +1,13 @@
+.DS_Store
+.playwright-mcp/
 .venv/
 __pycache__/
 *.pyc
 output/
+backend/output/
 logs/
+*.log
+.venv-hf/
 .env
 node_modules/
 .next/
