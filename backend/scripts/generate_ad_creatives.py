@@ -37,9 +37,7 @@ from hyperlocal.comfyui_provider import build_comfyui_config, generate_comfyui_b
 from hyperlocal.config import MODEL_CONFIG, RUNTIME_CONFIG
 from hyperlocal.image_providers import (
     build_ollama_image_config,
-    build_sdxl_config,
     generate_ollama_image,
-    generate_sdxl_image,
 )
 from hyperlocal.openai_helpers import build_client, generate_image
 
@@ -56,15 +54,13 @@ def ensure_dir(path: Path) -> None:
 
 def _normalize_provider(value: str) -> str:
     value = (value or "").strip().lower().replace("-", "_")
-    if value in {"sdxl"}:
-        return "sdxl"
     if value in {"openai"}:
         return "openai"
     if value in {"ollama"}:
         return "ollama"
     if value in {"comfyui_bg", "comfyui"}:
         return "comfyui_bg"
-    raise ValueError("image provider must be one of: comfyui_bg, ollama, sdxl, openai")
+    raise ValueError("image provider must be one of: comfyui_bg, ollama, openai")
 
 
 def write_flat_files(run_dir: Path, *, specs: list[object], meta: dict) -> None:
@@ -112,7 +108,7 @@ def main() -> None:
     parser.add_argument("--offer", default=smoothie_default_offer)
     parser.add_argument(
         "--image-provider",
-        choices=["comfyui_bg", "ollama", "sdxl", "openai"],
+        choices=["comfyui_bg", "ollama", "openai"],
         default=RUNTIME_CONFIG.image_provider.lower(),
     )
     parser.add_argument(
@@ -203,28 +199,6 @@ def main() -> None:
                     flush=True,
                 )
                 generate_ollama_image(prompt=spec.prompt, output_path=str(image_path), config=config)
-
-    elif provider == "sdxl":
-        config = build_sdxl_config(
-            api_url=RUNTIME_CONFIG.sdxl_api_url,
-            size=RUNTIME_CONFIG.image_size,
-            steps=RUNTIME_CONFIG.sdxl_steps,
-            cfg_scale=RUNTIME_CONFIG.sdxl_cfg_scale,
-            sampler=RUNTIME_CONFIG.sdxl_sampler,
-        )
-        for i, spec in enumerate(specs, start=1):
-            for v in range(1, images_per_prompt + 1):
-                image_path = run_dir / f"{i:02d}__{spec.slug}__v{v:02d}.png"
-                print(
-                    f"Generating image {i}/{len(specs)} variation {v}/{images_per_prompt} -> {image_path}",
-                    flush=True,
-                )
-                generate_sdxl_image(
-                    prompt=spec.prompt,
-                    negative_prompt=spec.negative_prompt,
-                    output_path=str(image_path),
-                    config=config,
-                )
 
     elif provider == "comfyui_bg":
         config = build_comfyui_config(

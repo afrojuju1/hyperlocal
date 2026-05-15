@@ -14,7 +14,6 @@ node_modules/
 out/
 web/.env*
 sdxl/*
-!sdxl/README.md
 comfyui/ComfyUI/
 !comfyui/ComfyUI/custom_nodes/
 !comfyui/ComfyUI/custom_nodes/hyperlocal_layout/

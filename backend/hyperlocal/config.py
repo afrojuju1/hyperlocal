@@ -29,12 +29,6 @@ class RuntimeConfig:
     )
     comfyui_timeout: float = float(os.getenv("COMFYUI_TIMEOUT", "600"))
     comfyui_output_node: str | None = os.getenv("COMFYUI_OUTPUT_NODE")
-    sdxl_api_url: str = os.getenv(
-        "SDXL_API_URL", "http://host.docker.internal:7860/sdapi/v1/txt2img"
-    )
-    sdxl_steps: int = int(os.getenv("SDXL_STEPS", "6"))
-    sdxl_cfg_scale: float = float(os.getenv("SDXL_CFG_SCALE", "1.5"))
-    sdxl_sampler: str = os.getenv("SDXL_SAMPLER", "Euler a")
     output_dir: str = os.getenv("HYPERLOCAL_OUTPUT_DIR", "output")
     max_image_attempts: int = int(os.getenv("HYPERLOCAL_MAX_IMAGE_ATTEMPTS", "3"))
     qc_enabled: bool = os.getenv("HYPERLOCAL_QC_ENABLED", "0") == "1"

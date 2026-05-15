@@ -32,19 +32,6 @@ def _check_llm() -> list[HealthCheck]:
     return [_check_llm_url("llm", resolve_llm_base_url().rstrip("/"))]
 
 
-def _check_sdxl() -> HealthCheck:
-    base = RUNTIME_CONFIG.sdxl_api_url
-    if "/sdapi/v1/" in base:
-        base = base.split("/sdapi/v1/")[0]
-    url = base.rstrip("/") + "/sdapi/v1/options"
-    try:
-        resp = httpx.get(url, timeout=2.5)
-        resp.raise_for_status()
-        return HealthCheck("sdxl", True, "ok")
-    except Exception as exc:
-        return HealthCheck("sdxl", False, f"error: {exc}")
-
-
 def _check_comfyui() -> HealthCheck:
     base = RUNTIME_CONFIG.comfyui_api_url.rstrip("/")
     url = base + "/system_stats"
@@ -59,9 +46,7 @@ def _check_comfyui() -> HealthCheck:
 def run_health_checks() -> dict[str, Any]:
     checks: list[HealthCheck] = [*_check_llm()]
     provider = RUNTIME_CONFIG.image_provider.lower()
-    if provider == "sdxl":
-        checks.append(_check_sdxl())
-    elif provider in {"comfyui", "comfyui_bg"}:
+    if provider in {"comfyui", "comfyui_bg"}:
         checks.append(_check_comfyui())
     overall = all(check.ok for check in checks)
     return {

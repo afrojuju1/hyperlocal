@@ -8,7 +8,7 @@ This repository now has one canonical generation flow:
    - normalize input
    - copy generation (`auto` or provided)
    - prompt generation for text-free backgrounds
-   - background rendering (`comfyui_bg` default; `ollama | sdxl | openai` remain optional providers)
+   - background rendering (`comfyui_bg` default; `ollama | openai` remain optional providers)
    - deterministic overlay rendering (brand kit templates)
    - persistence + manifest
 4. Poll `GET /api/v1/creative-runs/{run_id}` until `SUCCEEDED | FAILED | CANCELED`.

@@ -50,7 +50,7 @@ class CreativeGenerationOptions(BaseModel):
     count: int = Field(default=2, ge=1, le=4)
     images_per_prompt: int = Field(default=2, ge=1, le=3)
     prompt_engine: Literal["llm", "template"] = "llm"
-    background_provider: Literal["ollama", "sdxl", "openai", "comfyui_bg"] = "comfyui_bg"
+    background_provider: Literal["ollama", "openai", "comfyui_bg"] = "comfyui_bg"
     background_model: str | None = None
 
 

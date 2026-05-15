@@ -11,9 +11,7 @@ from hyperlocal.config import MODEL_CONFIG, RUNTIME_CONFIG
 from hyperlocal.contracts.creative_runs import CreativeRunRequest
 from hyperlocal.image_providers import (
     build_ollama_image_config,
-    build_sdxl_config,
     generate_ollama_image,
-    generate_sdxl_image,
 )
 from hyperlocal.openai_helpers import build_client, generate_image
 from scripts.generate_ad_prompts import build_llm_prompts, build_template_prompts
@@ -36,13 +34,6 @@ class BackgroundGenerationService:
         self._ollama_config = build_ollama_image_config(
             model=RUNTIME_CONFIG.ollama_image_model,
             timeout=RUNTIME_CONFIG.ollama_image_timeout,
-        )
-        self._sdxl_config = build_sdxl_config(
-            api_url=RUNTIME_CONFIG.sdxl_api_url,
-            size=RUNTIME_CONFIG.image_size,
-            steps=RUNTIME_CONFIG.sdxl_steps,
-            cfg_scale=RUNTIME_CONFIG.sdxl_cfg_scale,
-            sampler=RUNTIME_CONFIG.sdxl_sampler,
         )
         self._comfyui_config = build_comfyui_config(
             api_url=RUNTIME_CONFIG.comfyui_api_url,
@@ -97,13 +88,6 @@ class BackgroundGenerationService:
                         prompt=spec.prompt,
                         output_path=str(out_path),
                         config=ollama_cfg,
-                    )
-                elif provider == "sdxl":
-                    generate_sdxl_image(
-                        prompt=spec.prompt,
-                        negative_prompt=spec.negative_prompt,
-                        output_path=str(out_path),
-                        config=self._sdxl_config,
                     )
                 elif provider == "openai":
                     assert openai_client is not None
