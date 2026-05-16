@@ -12,7 +12,7 @@ from hyperlocal.deterministic_overlay import (
     load_brand_kit,
     resolve_template,
 )
-from hyperlocal.services.background_generation import BackgroundVariant
+from hyperlocal.services.image_generation import GeneratedCreative
 
 
 @dataclass(frozen=True)
@@ -30,10 +30,10 @@ class OverlayRenderingService:
         *,
         request: CreativeRunRequest,
         run_dir: Path,
-        backgrounds: list[BackgroundVariant],
+        source_images: list[GeneratedCreative],
         copies: list[CreativeCopyInput],
     ) -> list[OverlayVariantResult]:
-        if not backgrounds:
+        if not source_images:
             return []
 
         kit_path = self._resolve_brand_kit_path(request.overlay.brand_kit)
@@ -52,7 +52,7 @@ class OverlayRenderingService:
         out_dir.mkdir(parents=True, exist_ok=True)
 
         results: list[OverlayVariantResult] = []
-        for idx, background in enumerate(backgrounds, start=1):
+        for idx, source in enumerate(source_images, start=1):
             template = self._select_template(
                 mode=request.overlay.template_mode,
                 templates=brand_kit.templates,
@@ -61,11 +61,11 @@ class OverlayRenderingService:
                 forced_name=request.overlay.template_name,
             )
             template_name = template.name if template else "base"
-            copy = copies[(background.prompt_index - 1) % len(copies)]
+            copy = copies[(source.prompt_index - 1) % len(copies)]
 
-            final_path = out_dir / f"{background.variant_index:03d}__{background.prompt_slug}__{template_name}.png"
+            final_path = out_dir / f"{source.variant_index:03d}__{source.prompt_slug}__{template_name}.png"
             compose_deterministic_overlay(
-                input_image_path=background.background_path,
+                input_image_path=source.image_path,
                 output_image_path=str(final_path),
                 copy=OverlayCopy(
                     headline=copy.headline,
@@ -80,9 +80,9 @@ class OverlayRenderingService:
 
             results.append(
                 OverlayVariantResult(
-                    variant_index=background.variant_index,
-                    prompt_slug=background.prompt_slug,
-                    background_image_url=background.background_path,
+                    variant_index=source.variant_index,
+                    prompt_slug=source.prompt_slug,
+                    background_image_url=source.image_path,
                     final_image_url=str(final_path),
                     overlay_template=template_name,
                 )

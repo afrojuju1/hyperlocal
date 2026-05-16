@@ -211,8 +211,8 @@ export default function Home() {
           count: 2,
           images_per_prompt: 2,
           prompt_engine: "llm",
-          background_provider: "comfyui_bg",
-          text_mode: "in_image",
+          image_provider: "comfyui_bg",
+          creative_mode: "full_ad",
         },
         overlay: {
           brand_kit:

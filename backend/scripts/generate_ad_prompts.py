@@ -148,6 +148,28 @@ def _background_intro(*, business_kind: str, product: str) -> str:
     )
 
 
+def _brief_context(
+    *,
+    tone: str = "",
+    audience: str | None = None,
+    constraints: list[str] | None = None,
+    brand_colors: list[str] | None = None,
+    style_keywords: list[str] | None = None,
+) -> str:
+    parts: list[str] = []
+    if tone:
+        parts.append(f"Tone: {tone}.")
+    if audience:
+        parts.append(f"Audience: {audience}.")
+    if constraints:
+        parts.append(f"User constraints: {', '.join(constraints)}.")
+    if brand_colors:
+        parts.append(f"Brand color direction: {', '.join(brand_colors)}.")
+    if style_keywords:
+        parts.append(f"Style keywords: {', '.join(style_keywords)}.")
+    return " ".join(parts)
+
+
 def _template_directions(business_kind: str) -> list[tuple[str, str, str]]:
     if business_kind == "hvac":
         return [
@@ -241,18 +263,30 @@ def build_template_prompts(
     format_hint: str,
     count: int,
     cta: str = "ORDER NOW",
+    creative_mode: str | None = None,
+    tone: str = "",
+    audience: str | None = None,
+    constraints: list[str] | None = None,
+    brand_colors: list[str] | None = None,
+    style_keywords: list[str] | None = None,
 ) -> list[PromptSpec]:
-    constraints = base_constraints(
+    base_rules = base_constraints(
         business_kind=business_kind,
         text_mode=text_mode,
         business_name=business_name,
         offer=offer,
     )
+    brief_context = _brief_context(
+        tone=tone,
+        audience=audience,
+        constraints=constraints,
+        brand_colors=brand_colors,
+        style_keywords=style_keywords,
+    )
     neg = base_negative_prompt(business_kind=business_kind, text_mode=text_mode)
 
     directions = _template_directions(business_kind)
     style_variants = _style_variants(business_kind)
-    format_prefix = _format_prefix(format_hint, business_kind=business_kind)
 
     base = _background_intro(business_kind=business_kind, product=product)
 
@@ -264,7 +298,9 @@ def build_template_prompts(
             for d_slug, d_title, direction in directions:
                 slug = f"{d_slug}__{v_slug}"
                 title = f"{d_title} / {v_title}"
-                prompt = f"{base}{direction} {variant} {constraints}"
+                prompt = " ".join(
+                    part for part in [base, direction, variant, brief_context, base_rules] if part
+                )
                 specs.append(
                     PromptSpec(
                         slug=slug,
@@ -286,7 +322,9 @@ def build_template_prompts(
             for v_slug, v_title, variant in style_variants:
                 slug = f"{d_slug}__{v_slug}"
                 title = f"{d_title} / {v_title}"
-                prompt = f"{base}{direction} {variant} {constraints}"
+                prompt = " ".join(
+                    part for part in [base, direction, variant, brief_context, base_rules] if part
+                )
                 specs.append(
                     PromptSpec(
                         slug=slug,
@@ -316,13 +354,26 @@ def build_llm_prompts(
     format_hint: str,
     count: int,
     cta: str = "ORDER NOW",
+    creative_mode: str | None = None,
+    tone: str = "",
+    audience: str | None = None,
+    constraints: list[str] | None = None,
+    brand_colors: list[str] | None = None,
+    style_keywords: list[str] | None = None,
 ) -> list[PromptSpec]:
     llm = build_llm_clients()
-    constraints = base_constraints(
+    base_rules = base_constraints(
         business_kind=business_kind,
         text_mode=text_mode,
         business_name=business_name,
         offer=offer,
+    )
+    brief_context = _brief_context(
+        tone=tone,
+        audience=audience,
+        constraints=constraints,
+        brand_colors=brand_colors,
+        style_keywords=style_keywords,
     )
     neg = base_negative_prompt(business_kind=business_kind, text_mode=text_mode)
     format_prefix = _format_prefix(format_hint, business_kind=business_kind)
@@ -373,6 +424,7 @@ def build_llm_prompts(
             if text_mode == "in_image"
             else f"Business name: {business_name}. Product: {product}. Offer: {offer}. CTA: {cta}. "
         ),
+        f"{brief_context} " if brief_context else "",
         (
             "Use only the business name and offer as required visible text in the generated ad. "
             "Give the image model creative freedom over typography placement, hierarchy, and color. "
@@ -429,7 +481,7 @@ def build_llm_prompts(
         full = (
             _background_intro(business_kind=business_kind, product=product)
             +
-            f"{merged} {constraints}"
+            f"{merged} {brief_context} {base_rules}"
         ).strip()
 
         specs.append(
@@ -458,6 +510,12 @@ def build_llm_prompts(
             text_mode=text_mode,
             format_hint=format_hint,
             count=count,
+            creative_mode=creative_mode,
+            tone=tone,
+            audience=audience,
+            constraints=constraints,
+            brand_colors=brand_colors,
+            style_keywords=style_keywords,
         )
         for spec in filler:
             if len(specs) >= count:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 RunStatus = Literal["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELED"]
@@ -13,6 +13,7 @@ RunStage = Literal[
     "normalizing",
     "copy_generation",
     "prompt_generation",
+    "image_render",
     "background_render",
     "overlay_render",
     "persisting",
@@ -50,9 +51,42 @@ class CreativeGenerationOptions(BaseModel):
     count: int = Field(default=2, ge=1, le=4)
     images_per_prompt: int = Field(default=2, ge=1, le=3)
     prompt_engine: Literal["llm", "template"] = "llm"
-    background_provider: Literal["ollama", "openai", "comfyui_bg"] = "comfyui_bg"
+    creative_mode: Literal["full_ad", "background_overlay"] = "full_ad"
+    image_provider: Literal["ollama", "openai", "comfyui_bg"] = "comfyui_bg"
+    image_model: str | None = None
+    # Backward-compatible request fields. Prefer creative_mode/image_provider/image_model.
+    background_provider: Literal["ollama", "openai", "comfyui_bg"] | None = None
     background_model: str | None = None
-    text_mode: Literal["in_image", "overlay"] = "in_image"
+    text_mode: Literal["in_image", "overlay"] | None = None
+
+    @model_validator(mode="after")
+    def normalize_generation_aliases(self):
+        fields_set = self.model_fields_set
+        if (
+            "background_provider" in fields_set
+            and "image_provider" not in fields_set
+            and self.background_provider is not None
+        ):
+            self.image_provider = self.background_provider
+        self.background_provider = self.image_provider
+
+        if (
+            "background_model" in fields_set
+            and "image_model" not in fields_set
+            and self.background_model is not None
+        ):
+            self.image_model = self.background_model
+        self.background_model = self.image_model
+
+        if (
+            "text_mode" in fields_set
+            and "creative_mode" not in fields_set
+            and self.text_mode is not None
+        ):
+            self.creative_mode = "full_ad" if self.text_mode == "in_image" else "background_overlay"
+        self.text_mode = "in_image" if self.creative_mode == "full_ad" else "overlay"
+
+        return self
 
 
 class CreativeOverlayOptions(BaseModel):
