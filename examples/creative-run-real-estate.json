@@ -1,0 +1,47 @@
+{
+  "business": {
+    "name": "RapidKeys Home Buyers",
+    "city": "Austin",
+    "state": "TX"
+  },
+  "campaign": {
+    "business_kind": "real_estate",
+    "product": "We buy houses for cash",
+    "offer": "CLOSE IN AS LITTLE AS 7 DAYS",
+    "cta": "GET CASH OFFER",
+    "audience": "homeowners who need a fast, simple sale",
+    "tone": "trustworthy, direct, professional",
+    "constraints": [
+      "no for-sale signs",
+      "no paperwork text",
+      "avoid boxed coupon layouts"
+    ],
+    "brand_colors": [
+      "navy",
+      "gold",
+      "white"
+    ],
+    "style_keywords": [
+      "warm daylight",
+      "clean residential",
+      "trustworthy"
+    ],
+    "format_hint": "flyer_poster"
+  },
+  "generation": {
+    "count": 1,
+    "images_per_prompt": 1,
+    "prompt_engine": "llm",
+    "image_provider": "comfyui_bg",
+    "creative_mode": "full_ad"
+  },
+  "overlay": {
+    "brand_kit": "config/brand_kits/smoothie_default.json",
+    "template_mode": "cycle",
+    "seed": 120,
+    "copy_mode": "auto"
+  },
+  "output": {
+    "subdir": "creative_runs"
+  }
+}

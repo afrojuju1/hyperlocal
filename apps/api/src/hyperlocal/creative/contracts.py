@@ -36,7 +36,7 @@ class CreativeBusinessInput(BaseModel):
 
 class CreativeCampaignInput(BaseModel):
     campaign_id: int | None = None
-    business_kind: Literal["smoothie", "hvac"] = "smoothie"
+    business_kind: Literal["smoothie", "hvac", "real_estate"] = "smoothie"
     product: str
     offer: str
     cta: str

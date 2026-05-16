@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any, Literal
 
@@ -81,6 +81,8 @@ class LayoutRenderingService:
         for source in source_images:
             copy = copies[(source.prompt_index - 1) % len(copies)]
             plan = self._plan_layout(request=request, source=source, copy=copy)
+            plan = self._refine_plan_for_image(input_image_path=source.image_path, plan=plan)
+            plan = self._apply_brand_defaults(request=request, plan=plan)
             final_path = out_dir / f"{source.variant_index:03d}__{source.prompt_slug}__typography.png"
             self._render_plan(
                 input_image_path=source.image_path,
@@ -109,6 +111,52 @@ class LayoutRenderingService:
             )
 
         return results
+
+    def _refine_plan_for_image(
+        self,
+        *,
+        input_image_path: str | Path,
+        plan: CreativeLayoutPlan,
+    ) -> CreativeLayoutPlan:
+        base = Image.open(input_image_path).convert("RGB")
+        refined: list[LayoutTextElement] = []
+        moved = False
+        for element in plan.elements:
+            next_element = element
+            if element.role == "offer":
+                next_element = _choose_calm_offer_zone(base=base, element=element, occupied=refined)
+                moved = moved or next_element != element
+            refined.append(next_element)
+
+        if not moved:
+            return plan
+        notes = " ".join(part for part in [plan.notes, "Offer moved to a calmer image zone."] if part)
+        return CreativeLayoutPlan(name=plan.name, elements=refined, notes=notes)
+
+    def _apply_brand_defaults(
+        self,
+        *,
+        request: CreativeRunRequest,
+        plan: CreativeLayoutPlan,
+    ) -> CreativeLayoutPlan:
+        if request.campaign.business_kind not in {"hvac", "real_estate"}:
+            return plan
+
+        elements: list[LayoutTextElement] = []
+        for element in plan.elements:
+            if element.color != "auto":
+                elements.append(element)
+                continue
+            if request.campaign.business_kind == "hvac":
+                if element.role == "offer":
+                    elements.append(replace(element, color="#B91C1C", stroke_color="#FFFFFF"))
+                else:
+                    elements.append(replace(element, color="#0B3A82", stroke_color="#FFFFFF"))
+            elif element.role == "offer":
+                elements.append(replace(element, color="#B7791F", stroke_color="#FFFFFF"))
+            else:
+                elements.append(replace(element, color="#102A43", stroke_color="#FFFFFF"))
+        return CreativeLayoutPlan(name=plan.name, elements=elements, notes=plan.notes)
 
     def _plan_layout(
         self,
@@ -150,8 +198,8 @@ class LayoutRenderingService:
                 "- The renderer will draw exact text from your plan; do not rewrite the supplied strings.",
                 "- Do not add boxes, banners, stickers, coupons, pill bars, button shapes, labels, or panels.",
                 "- Use natural negative space and let text sit directly in the composition with stroke/shadow for legibility.",
-                "- Prefer a clean two-element layout: business name plus offer. Add the product only if it improves the ad.",
-                "- Do not include CTA text in the artwork.",
+                "- Use a clean two-element layout: business name plus offer.",
+                "- Do not include product, subhead, CTA, phone, website, address, or disclaimer text in the artwork.",
                 "",
                 "Coordinate system:",
                 "- x, y, width, height are normalized 0.0 to 1.0.",
@@ -178,7 +226,6 @@ class LayoutRenderingService:
                 "Allowed exact text strings:",
                 f'- headline: "{copy.headline}"',
                 f'- offer: "{copy.offer}"',
-                f'- optional subhead: "{copy.subhead}"',
                 "",
                 "Brief:",
                 f"- business kind: {request.campaign.business_kind}",
@@ -218,8 +265,6 @@ class LayoutRenderingService:
             "headline": copy.headline,
             "offer": copy.offer,
         }
-        if copy.subhead.strip():
-            exact_text_by_role["subhead"] = copy.subhead
 
         elements: list[LayoutTextElement] = []
         seen_roles: set[str] = set()
@@ -475,6 +520,83 @@ def _normalize_box(element: LayoutTextElement) -> LayoutTextElement:
         shadow=element.shadow,
         max_lines=element.max_lines,
     )
+
+
+def _choose_calm_offer_zone(
+    *,
+    base: Image.Image,
+    element: LayoutTextElement,
+    occupied: list[LayoutTextElement],
+) -> LayoutTextElement:
+    candidate_ys = [element.y, 0.24, 0.30, 0.62, 0.70, 0.78]
+    candidates = [
+        _normalize_box(replace(element, y=y))
+        for y in candidate_ys
+    ]
+    scored = [
+        (_zone_score(base=base, element=candidate, occupied=occupied), candidate)
+        for candidate in candidates
+    ]
+    current_score = _zone_score(base=base, element=element, occupied=occupied)
+    best_score, best = min(scored, key=lambda item: item[0])
+    in_central_band = 0.28 <= element.y <= 0.62
+    if in_central_band or best_score + 8 < current_score:
+        return best
+    return element
+
+
+def _zone_score(
+    *,
+    base: Image.Image,
+    element: LayoutTextElement,
+    occupied: list[LayoutTextElement],
+) -> float:
+    w, h = base.size
+    box = (
+        int(w * element.x),
+        int(h * element.y),
+        int(w * (element.x + element.width)),
+        int(h * (element.y + element.height)),
+    )
+    x0 = max(0, min(w - 1, box[0]))
+    y0 = max(0, min(h - 1, box[1]))
+    x1 = max(x0 + 1, min(w, box[2]))
+    y1 = max(y0 + 1, min(h, box[3]))
+    crop = base.crop((x0, y0, x1, y1)).convert("L").resize((48, 48))
+    px = crop.load()
+    values = [px[x, y] for y in range(48) for x in range(48)]
+    mean = sum(values) / len(values)
+    variance = sum((value - mean) ** 2 for value in values) / len(values)
+    edge_total = 0
+    edge_count = 0
+    for y in range(48):
+        for x in range(47):
+            edge_total += abs(px[x, y] - px[x + 1, y])
+            edge_count += 1
+    for y in range(47):
+        for x in range(48):
+            edge_total += abs(px[x, y] - px[x, y + 1])
+            edge_count += 1
+    edge = edge_total / max(1, edge_count)
+    score = (variance ** 0.5) + (edge * 1.5)
+
+    if 0.28 <= element.y <= 0.62:
+        score += 18
+
+    for other in occupied:
+        if _overlap_area_ratio(element, other) > 0:
+            score += 90
+    return score
+
+
+def _overlap_area_ratio(a: LayoutTextElement, b: LayoutTextElement) -> float:
+    ax0, ay0, ax1, ay1 = a.x, a.y, a.x + a.width, a.y + a.height
+    bx0, by0, bx1, by1 = b.x, b.y, b.x + b.width, b.y + b.height
+    overlap_w = max(0.0, min(ax1, bx1) - max(ax0, bx0))
+    overlap_h = max(0.0, min(ay1, by1) - max(ay0, by0))
+    overlap = overlap_w * overlap_h
+    area = max(0.0001, a.width * a.height)
+    return overlap / area
 
 
 def _draw_element(

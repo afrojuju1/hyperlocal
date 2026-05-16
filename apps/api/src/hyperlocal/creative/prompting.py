@@ -85,16 +85,23 @@ def base_constraints(*, business_kind: str, text_mode: str, business_name: str, 
             "Clear cups, fresh fruit, shop atmosphere, motion, splashes, natural hands, or editorial props are allowed when they improve the concept.",
             "Avoid readable product labels or brand marks.",
         ]
-    else:  # hvac
+    elif business_kind == "hvac":
         parts += [
             "Premium home-service advertising photography.",
-            "Modern homes, HVAC equipment, vents, tools, technician presence, families, seasonal comfort cues, or subtle airflow are allowed when natural and safe.",
-            "Avoid readable truck decals, uniform text, brand marks, or unsafe work scenes.",
+            "Modern homes, heating and cooling equipment, vents, tools, plain unmarked technician workwear, families, seasonal comfort cues, or subtle airflow are allowed when natural and safe.",
+            "Avoid service vehicles, readable decals, uniform patches, brand marks, screens with text, or unsafe work scenes.",
+        ]
+    else:  # real_estate
+        parts += [
+            "Premium real-estate and home-services advertising photography.",
+            "Modern homes, bright interiors, kitchens, living rooms, hallways, keys, plain moving boxes, or moving-day details are allowed when natural.",
+            "Avoid address numbers, paperwork text, logos, brand marks, or readable documents.",
         ]
     if text_mode == "overlay":
         parts += [
             "Keep all product and environmental surfaces plain and unmarked.",
             "Avoid graphic-design elements inside the generated scene.",
+            "Do not render wall lettering, service slogans, prices, phone-number-like digits, vehicle decals, HVAC lettering, or emergency-service text.",
         ]
     return " ".join(parts)
 
@@ -102,11 +109,14 @@ def base_constraints(*, business_kind: str, text_mode: str, business_name: str, 
 def base_negative_prompt(*, business_kind: str, text_mode: str) -> str:
     extra = ""
     if business_kind == "hvac":
-        extra = " Avoid unsafe work scenes, readable truck decals, and uniform text."
+        extra = " Avoid unsafe work scenes, service vehicles, readable decals, uniform patches, and HVAC lettering."
+    if business_kind == "real_estate":
+        extra = " Avoid real estate yard signs, window signs, door signs, sale lettering, sold lettering, address numbers, paperwork text, and readable documents."
     if text_mode == "overlay":
         return (
             "Avoid readable text, misspelled words, coupons, labels, logos, watermarks, menus, and signage. "
             "Avoid numbers, percent signs, offer copy, and business-name lettering. "
+            "Avoid currency symbols, 24/7 lettering, wall lettering, decals, truck graphics, service slogans, poster text, and phone-number-like marks. "
             "Avoid distorted faces, extra fingers, broken anatomy, cluttered coupon layouts, and low-quality artifacts."
             + extra
         )
@@ -136,7 +146,27 @@ def _format_prefix(format_hint: str, *, business_kind: str) -> str:
     return "commercial ad creative image"
 
 
-def _background_intro(*, business_kind: str, product: str) -> str:
+def _background_intro(*, business_kind: str, product: str, text_mode: str) -> str:
+    if text_mode == "overlay":
+        if business_kind == "hvac":
+            subject = (
+                "a clean residential home-service comfort scene with heating and cooling equipment, vents, "
+                "tools, airflow, or a plain unmarked technician moment; avoid vehicles and text-like graphics"
+            )
+            business_label = "home-service"
+        elif business_kind == "real_estate":
+            subject = (
+                "a tight polished residential interior composition with kitchen counters, keys, cabinets, "
+                "plain walls, or plain moving boxes; keep the view fully inside the home"
+            )
+            business_label = "real-estate service"
+        else:
+            subject = f"{product} as a realistic product or lifestyle scene"
+            business_label = business_kind
+        return (
+            f"Create a vertical 6x9 photorealistic campaign image for a local {business_label} business. "
+            f"Main visual subject: {subject}. "
+        )
     return (
         f"Create a vertical 6x9 photorealistic campaign image for a local {business_kind} business. "
         f"Main product or subject: {product}. "
@@ -165,14 +195,70 @@ def _brief_context(
     return " ".join(parts)
 
 
+_TEXT_HAZARD_RE = re.compile(
+    r"\b(text|signs?|logos?|labels?|decals?|address|paperwork|documents?|phone|numbers?|coupons?|brands?|letters?|marks?)\b",
+    re.IGNORECASE,
+)
+
+
+def _visual_constraints_for_prompt(
+    constraints: list[str] | None,
+    *,
+    text_mode: str,
+) -> list[str] | None:
+    if text_mode != "overlay" or not constraints:
+        return constraints
+    return [item for item in constraints if not _TEXT_HAZARD_RE.search(item)]
+
+
+def _visual_audience_for_prompt(
+    audience: str | None,
+    *,
+    business_kind: str,
+    text_mode: str,
+) -> str | None:
+    if text_mode != "overlay" or business_kind != "real_estate" or not audience:
+        return audience
+    cleaned = re.sub(r"\bsale\b", "transaction", audience, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bsell\b", "move", cleaned, flags=re.IGNORECASE)
+    return cleaned
+
+
 def _template_directions(business_kind: str) -> list[tuple[str, str, str]]:
+    if business_kind == "real_estate":
+        return [
+            (
+                "modern_kitchen",
+                "Modern Kitchen",
+                "A clean modern kitchen and dining area with soft ambient daylight, polished counters, subtle moving-day cues, and premium real-home texture. "
+                "No paperwork, screens, labels, or readable decor.",
+            ),
+            (
+                "keys_counter",
+                "Keys Counter",
+                "A close editorial scene of plain house keys on a stone countertop with cabinets and a clean interior wall softly visible behind them. "
+                "No branded keychains, documents, contracts, or readable marks.",
+            ),
+            (
+                "sunlit_living_room",
+                "Sunlit Living Room",
+                "A bright neutral living room with clean furniture, warm ambient light, soft plants, and subtle moving boxes without markings. "
+                "No windows, doors, paperwork, screens, labels, or readable decor.",
+            ),
+            (
+                "calm_hallway",
+                "Calm Hallway",
+                "A clean residential hallway with warm wood floors, soft daylight, and a few plain packed boxes near an interior doorway. "
+                "No front-door exterior, address numbers, documents, or readable marks.",
+            ),
+        ]
     if business_kind == "hvac":
         return [
             (
                 "interior_vent_airflow",
                 "Interior Vent Airflow",
                 "A sunlit modern living room with a visible ceiling or wall air vent, linen curtains moving slightly in cool air. "
-                "Premium home comfort mood, real materials, layered depth, room for copy in the bright wall area.",
+                "Premium home comfort mood, real materials, layered depth, with an uncluttered bright wall area.",
             ),
             (
                 "outdoor_condenser",
@@ -183,14 +269,14 @@ def _template_directions(business_kind: str) -> list[tuple[str, str, str]]:
             (
                 "register_closeup",
                 "Register Close-Up",
-                "Macro close-up of a clean metal HVAC register with cool light, crisp reflections, and subtle atmospheric haze. "
-                "Editorial product-photography feel with an elegant open area for copy.",
+                "Macro close-up of a clean metal air register with cool light, crisp reflections, and subtle atmospheric haze. "
+                "Editorial product-photography feel with an elegant uncluttered area.",
             ),
             (
                 "technician_arrival",
                 "Technician Arrival",
-                "A service technician arriving at a bright residential front entry with a compact tool bag, captured like a premium local-service ad. "
-                "No readable branding; keep the scene friendly, trustworthy, and cinematic.",
+                "A service technician arriving at a bright residential front entry with a compact unmarked tool bag, captured like a premium local-service ad. "
+                "No service vehicle, no readable branding, no wall signs; keep the scene friendly, trustworthy, and cinematic.",
             ),
         ]
     # smoothie
@@ -199,7 +285,7 @@ def _template_directions(business_kind: str) -> list[tuple[str, str, str]]:
             "mango_hero_pair",
             "Hero Pair",
             "Two tall mango smoothies with condensation on a vibrant shop counter, fresh mango, citrus, herbs, and sunlight. "
-            "Make it feel like a premium summer campaign, with a clear landing zone for offer text.",
+            "Make it feel like a premium summer campaign, with a calm uncluttered visual area.",
         ),
         (
             "mango_pour_splash",
@@ -211,7 +297,7 @@ def _template_directions(business_kind: str) -> list[tuple[str, str, str]]:
             "ingredient_flatlay",
             "Ingredient Flatlay",
             "Top-down editorial flatlay with mango, citrus, mint, ice, a smoothie cup, colorful napkins, and playful summer styling. "
-            "Organized enough for overlay copy, but rich and lively.",
+            "Organized with calm negative space, but rich and lively.",
         ),
         (
             "tropical_counter_scene",
@@ -235,6 +321,12 @@ def _template_directions(business_kind: str) -> list[tuple[str, str, str]]:
 
 
 def _style_variants(business_kind: str) -> list[tuple[str, str, str]]:
+    if business_kind == "real_estate":
+        return [
+            ("warm_daylight", "Warm Daylight", "Warm natural daylight, clean shadows, welcoming residential mood."),
+            ("premium_editorial", "Premium Editorial", "Premium editorial lighting, real materials, bright but grounded composition."),
+            ("trust_clean", "Trust Clean", "Clean trustworthy service-ad feel, polished but not sterile."),
+        ]
     if business_kind == "hvac":
         return [
             ("bright_daylight", "Bright Daylight", "Bright natural daylight, clean crisp shadows, modern home vibe."),
@@ -273,8 +365,12 @@ def build_template_prompts(
     )
     brief_context = _brief_context(
         tone=tone,
-        audience=audience,
-        constraints=constraints,
+        audience=_visual_audience_for_prompt(
+            audience,
+            business_kind=business_kind,
+            text_mode=text_mode,
+        ),
+        constraints=_visual_constraints_for_prompt(constraints, text_mode=text_mode),
         brand_colors=brand_colors,
         style_keywords=style_keywords,
     )
@@ -283,12 +379,12 @@ def build_template_prompts(
     directions = _template_directions(business_kind)
     style_variants = _style_variants(business_kind)
 
-    base = _background_intro(business_kind=business_kind, product=product)
+    base = _background_intro(business_kind=business_kind, product=product, text_mode=text_mode)
 
     specs: list[PromptSpec] = []
-    # For HVAC, we prefer diverse concepts first; for smoothies, lighting/style variants
-    # per concept are useful.
-    if business_kind == "hvac":
+    # Service categories benefit from diverse concepts first; for smoothies, lighting/style
+    # variants per product concept are useful.
+    if business_kind in {"hvac", "real_estate"}:
         for v_slug, v_title, variant in style_variants:
             for d_slug, d_title, direction in directions:
                 slug = f"{d_slug}__{v_slug}"
@@ -365,21 +461,29 @@ def build_llm_prompts(
     )
     brief_context = _brief_context(
         tone=tone,
-        audience=audience,
-        constraints=constraints,
+        audience=_visual_audience_for_prompt(
+            audience,
+            business_kind=business_kind,
+            text_mode=text_mode,
+        ),
+        constraints=_visual_constraints_for_prompt(constraints, text_mode=text_mode),
         brand_colors=brand_colors,
         style_keywords=style_keywords,
     )
     neg = base_negative_prompt(business_kind=business_kind, text_mode=text_mode)
     format_prefix = _format_prefix(format_hint, business_kind=business_kind)
-    format_instruction = f"Make it clearly a {format_prefix}."
+    format_instruction = (
+        f"Make it clearly a {format_prefix}."
+        if text_mode == "in_image"
+        else "The final output is a flyer or poster, but each image prompt must describe only a text-free photographic source scene."
+    )
 
     def _candidate_is_valid(item: dict) -> bool:
         if text_mode != "overlay":
             return True
         text = " ".join(
             str(item.get(k, "") or "")
-            for k in ["subject", "scene", "composition", "lighting", "style", "constraints"]
+            for k in ["subject", "scene", "composition", "lighting", "style"]
         ).lower()
         hard_rejects = [
             "readable headline",
@@ -391,8 +495,59 @@ def build_llm_prompts(
             "typography layout",
             "flyer text",
             "text placeholder",
+            "branded",
+            "uniform",
+            "badge",
+            "patch",
+            "lettering",
+            "label",
+            "sign",
+            "decal",
+            "truck",
+            "vehicle",
+            "van",
+            "display",
+            "screen",
+            "icon",
+            "premium hvac service",
+            "service in action",
+            "24/7",
+            "$",
+            "%",
+            "price",
+            "phone number",
+            "wall lettering",
+            "truck decal",
+            "vehicle decal",
+            "service slogan",
         ]
         if any(token in text for token in hard_rejects):
+            return False
+        if business_kind == "real_estate":
+            real_estate_rejects = [
+                "door",
+                "front door",
+                "front entry",
+                "entryway",
+                "porch",
+                "exterior",
+                "neighborhood",
+                "window",
+                "glass",
+                "outside",
+                "street",
+                "sale",
+                "for sale",
+                "sold",
+                "yard",
+                "address",
+                "paperwork",
+                "contract",
+                "document",
+            ]
+            if any(token in text for token in real_estate_rejects):
+                return False
+        if re.search(r"\d", text):
             return False
         return True
 
@@ -404,7 +559,11 @@ def build_llm_prompts(
     vertical_direction = (
         "For smoothies, think like a premium food-and-beverage art director: dynamic pours, real cafe context, summer lifestyle, macro texture, fruit abundance, glass reflections, sunlight, color, and appetite appeal. "
         if business_kind == "smoothie"
-        else "For HVAC, think like a premium local home-service art director: comfortable rooms, fresh airflow, trustworthy technician moments, equipment detail, seasonal relief, modern homes, and believable service context. "
+        else (
+            "For HVAC, think like a premium local home-service art director: comfortable rooms, fresh airflow, trustworthy technician moments, equipment detail, seasonal relief, modern homes, and believable service context. "
+            if business_kind == "hvac"
+            else "For real estate, think like a premium local property-services art director: clean interiors, warm kitchens, living rooms, keys on counters, plain walls, and smooth transaction cues without doors, windows, exterior views, listing props, or documents. "
+        )
     )
     prompt_parts = [
         "Generate bold, high-converting image prompt specs for a local business promotion. ",
@@ -417,14 +576,14 @@ def build_llm_prompts(
         (
             f"Business name: {business_name}. Product: {product}. Offer: {offer}. "
             if text_mode == "in_image"
-            else f"Business name: {business_name}. Product: {product}. Offer: {offer}. CTA: {cta}. "
+            else f"Business name: {business_name}. Product/service category: {business_kind}. Offer: {offer}. CTA: {cta}. "
         ),
         f"{brief_context} " if brief_context else "",
         (
             "Use only the business name and offer as required visible text in the generated ad. "
             "Give the image model creative freedom over typography placement, hierarchy, and color. "
             if text_mode == "in_image"
-            else "Use the business and offer only as creative context; do not put either into the image prompt text. "
+            else "Use the business and offer only as strategy context; do not put exact offer, CTA, prices, digits, business name, or service slogans into the image prompt text. "
         ),
         (
             "Text policy: in_image. The generated image is the final ad with integrated typography; do not reserve space for later overlay. "
@@ -434,10 +593,21 @@ def build_llm_prompts(
         f"Business vertical: {business_kind}. ",
         vertical_direction,
         (
+            "For HVAC overlay prompts, use heating-and-cooling visual language instead of visible HVAC lettering; if a technician appears, describe plain unmarked workwear only. "
+            if text_mode == "overlay" and business_kind == "hvac"
+            else ""
+        ),
+        (
+            "For real-estate overlay prompts, use interior-only close home scenes; avoid doors, windows, porches, exteriors, address numbers, paperwork, contracts, and readable documents. "
+            if text_mode == "overlay" and business_kind == "real_estate"
+            else ""
+        ),
+        (
             f"Creative goal: make each {business_kind} {format_prefix} feel like a complete finished ad, not an empty template. "
             if text_mode == "in_image"
-            else f"Creative goal: make each {business_kind} {format_prefix} feel like a distinct campaign concept with one obvious overlay copy zone, not an empty template. "
+            else f"Creative goal: make each {business_kind} {format_prefix} feel like a distinct campaign source image with one calm negative-space area, not an empty template. "
         ),
+        "For overlay mode, avoid concepts that require signs, walls with lettering, service trucks with decals, phone numbers, prices, or visible typography. ",
         "Return only JSON. Do not include markdown. Invent unique concepts for this brief. ",
         "Each JSON object must use these string fields: slug, title, subject, scene, composition, lighting, style, constraints. ",
         "Return JSON only, no markdown.",
@@ -474,7 +644,7 @@ def build_llm_prompts(
             if part
         )
         full = (
-            _background_intro(business_kind=business_kind, product=product)
+            _background_intro(business_kind=business_kind, product=product, text_mode=text_mode)
             +
             f"{merged} {brief_context} {base_rules}"
         ).strip()

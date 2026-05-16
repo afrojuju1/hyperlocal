@@ -173,7 +173,12 @@ export default function Home() {
     setRunId(null);
     setRunStage("queued (0%)");
     try {
-      const businessKind = preset === "hvac" ? "hvac" : "smoothie";
+      const businessKind =
+        preset === "hvac"
+          ? "hvac"
+          : preset === "realEstate"
+            ? "real_estate"
+            : "smoothie";
       const payload = {
         business: {
           name: form.name,

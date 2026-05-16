@@ -123,6 +123,66 @@ class BackgroundPromptingTests(unittest.TestCase):
         self.assertEqual(meta["requested_text_mode"], "overlay")
         self.assertEqual(meta["final_typography"], "ai_layout")
 
+    def test_full_ad_hvac_prompt_omits_service_copy_from_source_image(self) -> None:
+        service = ImageGenerationService()
+        request = CreativeRunRequest(
+            business=CreativeBusinessInput(name="Northside Plumbing & HVAC"),
+            campaign=CreativeCampaignInput(
+                business_kind="hvac",
+                product="24/7 emergency plumbing and AC repair",
+                offer="$79 SERVICE CALL",
+                cta="CALL 24/7",
+                constraints=["no readable truck decals"],
+            ),
+            generation=CreativeGenerationOptions(
+                count=1,
+                images_per_prompt=1,
+                prompt_engine="template",
+                image_provider="comfyui_bg",
+                creative_mode="full_ad",
+            ),
+        )
+
+        spec = service._build_prompt_specs(request)[0]
+
+        self.assertIn("home-service comfort scene", spec.prompt)
+        self.assertNotIn("24/7 emergency plumbing", spec.prompt)
+        self.assertNotIn("$79", spec.prompt)
+        self.assertNotIn("SERVICE CALL", spec.prompt)
+        self.assertNotIn("CALL 24/7", spec.prompt)
+        self.assertNotIn("no readable truck decals", spec.prompt)
+        self.assertIn("Avoid currency symbols", spec.negative_prompt)
+
+    def test_full_ad_real_estate_prompt_is_text_free(self) -> None:
+        service = ImageGenerationService()
+        request = CreativeRunRequest(
+            business=CreativeBusinessInput(name="RapidKeys Home Buyers"),
+            campaign=CreativeCampaignInput(
+                business_kind="real_estate",
+                product="We buy houses for cash",
+                offer="Close in as little as 7 days",
+                cta="Get Cash Offer",
+            ),
+            generation=CreativeGenerationOptions(
+                count=1,
+                images_per_prompt=1,
+                prompt_engine="template",
+                image_provider="comfyui_bg",
+                creative_mode="full_ad",
+            ),
+        )
+
+        spec = service._build_prompt_specs(request)[0]
+
+        self.assertIn("real-estate service", spec.prompt)
+        self.assertIn("residential interior composition", spec.prompt)
+        self.assertIn("No paperwork, screens, labels, or readable decor", spec.prompt)
+        self.assertNotIn("RapidKeys", spec.prompt)
+        self.assertNotIn("Close in as little", spec.prompt)
+        self.assertNotIn("sale", spec.prompt.lower())
+        self.assertNotIn("no for-sale signs", spec.prompt)
+        self.assertIn("Avoid real estate yard signs", spec.negative_prompt)
+
     def test_full_ad_prompt_specs_include_user_creative_direction(self) -> None:
         service = ImageGenerationService()
         request = CreativeRunRequest(
