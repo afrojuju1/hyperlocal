@@ -367,7 +367,7 @@ export default function Home() {
             </h2>
             <p className="mt-2 text-sm text-zinc-600">
               Results appear here after generation. Images are served from the
-              backend container.
+              API container.
             </p>
             {runId !== null && (
               <p className="mt-2 text-xs text-zinc-500">

@@ -2,7 +2,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: apps/api/Dockerfile
     container_name: hyperlocal-backend
     environment:
       DATABASE_URL: postgresql+psycopg://hyperlocal:hyperlocal@db:5432/hyperlocal
@@ -28,7 +28,7 @@ services:
   creative-worker:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: apps/api/Dockerfile
     container_name: hyperlocal-creative-worker
     environment:
       DATABASE_URL: postgresql+psycopg://hyperlocal:hyperlocal@db:5432/hyperlocal
@@ -54,7 +54,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: web/Dockerfile
+      dockerfile: apps/web/Dockerfile
     container_name: hyperlocal-web
     environment:
       NEXT_PUBLIC_API_BASE_URL: http://localhost:18000

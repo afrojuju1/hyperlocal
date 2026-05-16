@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "web",
+      "name": "hyperlocal-web",
       "dependencies": {
         "next": "16.1.6",
         "react": "19.2.3",

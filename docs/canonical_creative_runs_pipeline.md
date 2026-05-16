@@ -16,7 +16,7 @@ This repository now has one canonical generation flow:
 
 Each run writes to:
 
-`backend/output/creative_runs/<run_id>/`
+`apps/api/output/creative_runs/<run_id>/`
 
 Contains:
 - `prompts/*.prompt.txt`
@@ -33,7 +33,7 @@ Contains:
 
 ## Worker
 
-Run from `backend/`:
+Run from `apps/api/`:
 
 ```bash
 uv run scripts/run_creative_worker.py

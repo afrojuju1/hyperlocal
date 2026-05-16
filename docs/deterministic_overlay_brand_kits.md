@@ -16,7 +16,7 @@ uv run scripts/run_creative_worker.py
 
 For one-off background experiments, the older prompt script can still be used with explicit provider flags.
 
-From `backend/`:
+From `apps/api/`:
 
 ```bash
 uv run scripts/generate_ad_creatives.py \
@@ -51,8 +51,8 @@ uv run scripts/render_ad_overlays.py \
 
 ## Brand kit files
 
-- `backend/config/brand_kits/smoothie_default.json`
-- `backend/config/brand_kits/hvac_default.json`
+- `apps/api/config/brand_kits/smoothie_default.json`
+- `apps/api/config/brand_kits/hvac_default.json`
 
 Tune colors, fonts, and layout ratios there without changing Python code.
 

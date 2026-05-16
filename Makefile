@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
-API_DIR := backend
-WEB_DIR := web
+API_DIR := apps/api
+WEB_DIR := apps/web
 API_BASE_URL ?= http://localhost:18000
 DATABASE_URL ?= postgresql+psycopg://hyperlocal:hyperlocal@localhost:55432/hyperlocal
 
@@ -12,7 +12,7 @@ DATABASE_URL ?= postgresql+psycopg://hyperlocal:hyperlocal@localhost:55432/hyper
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*## "; printf "Hyperlocal commands:\n"} /^[a-zA-Z0-9_-]+:.*## / {printf "  %-14s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-setup: ## Install backend and web dependencies
+setup: ## Install API and web dependencies
 	cd $(API_DIR) && uv sync
 	cd $(WEB_DIR) && bun install
 
@@ -47,7 +47,7 @@ db-reset: ## Drop and recreate the local database schema, with confirmation
 
 check: check-api check-web ## Run the full quality gate
 
-check-api: ## Run backend tests and compile checks
+check-api: ## Run API tests and compile checks
 	cd $(API_DIR) && uv run python -m unittest discover -s tests
 	cd $(API_DIR) && uv run python -m compileall hyperlocal scripts tests
 

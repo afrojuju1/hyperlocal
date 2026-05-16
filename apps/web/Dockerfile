@@ -2,10 +2,10 @@ FROM oven/bun:1.3.4-alpine
 
 WORKDIR /app
 
-COPY web/package.json web/bun.lock /app/
+COPY apps/web/package.json apps/web/bun.lock /app/
 RUN bun install --frozen-lockfile
 
-COPY web /app
+COPY apps/web /app
 RUN bun run build
 
 EXPOSE 3000

@@ -11,10 +11,10 @@ RUN pip install --no-cache-dir uv
 ENV TYPST_INSTALL=/usr/local
 RUN curl -fsSL https://install.typst.community/install.sh | sh
 
-COPY backend/pyproject.toml backend/uv.lock /app/
+COPY apps/api/pyproject.toml apps/api/uv.lock /app/
 RUN uv sync --frozen --no-dev --python "$UV_PYTHON"
 
-COPY backend /app
+COPY apps/api /app
 
 EXPOSE 8000
 

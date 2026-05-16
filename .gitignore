@@ -4,7 +4,7 @@
 __pycache__/
 *.pyc
 output/
-backend/output/
+apps/api/output/
 logs/
 *.log
 .venv-hf/
@@ -12,10 +12,10 @@ logs/
 node_modules/
 .next/
 out/
-web/.env*
+apps/web/.env*
 
 # Legacy local inference checkouts/caches. Default inference runs on the NucBox.
 sdxl/
 mlx/
 comfyui/
-backend/comfyui/
+apps/api/comfyui/

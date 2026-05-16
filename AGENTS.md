@@ -9,7 +9,7 @@ Hyperlocal is a flyer-generation pipeline that uses:
 
 ## Conventions
 - Use `uv` for Python dependencies and execution.
-- Use Postgres + SQL schema from `backend/sql/schema.sql` (Option B).
+- Use Postgres + SQL schema from `apps/api/sql/schema.sql` (Option B).
 - Avoid absolute paths in commands; assume repo root.
 - Keep generated images out of git; they go under `output/`.
 
@@ -44,7 +44,7 @@ make worker
 ```
 
 ## Environment
-Use `.env` (see `backend/.env.example`) and set at minimum:
+Use `.env` (see `apps/api/.env.example`) and set at minimum:
 - `DATABASE_URL`
 - `OLLAMA_BASE_URL` (NucBox default: `http://100.111.132.114:11434/v1`)
 - `HYPERLOCAL_TEXT_MODEL` (default: `qwen3:8b`)

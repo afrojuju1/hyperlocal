@@ -49,9 +49,9 @@ make web
 - `GET /api/v1/creative-runs/{run_id}/files`
 
 ## Notes
-- Configure `.env` from `backend/.env.example`.
+- Configure `.env` from `apps/api/.env.example`.
 - Worker process is required for queued run execution.
-- Output root: `backend/output/creative_runs/<run_id>/`.
+- Output root: `apps/api/output/creative_runs/<run_id>/`.
 
 ## NucBox Ollama Text Generation
 
