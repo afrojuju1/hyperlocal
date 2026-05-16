@@ -1,7 +1,6 @@
 {
   "smoothie": {
     "label": "smoothie",
-    "overlay_business_label": "smoothie",
     "overlay_subject": "{product} as a realistic product or lifestyle scene",
     "constraints": {
       "in_image": [
@@ -75,6 +74,8 @@
     "layout": {},
     "qc": {
       "text_score_threshold": 34,
+      "red_text_score_threshold": 55,
+      "blue_text_score_threshold": 95,
       "calm_zone_score_threshold": 88,
       "retry_prompt_append": "Retry correction: keep every surface plain and unmarked, avoid signage or label-like details, and preserve one calm low-detail area for later exact typography.",
       "retry_negative_append": "No readable text, no labels, no logos, no signs, no menus, no package lettering, no coupon graphics, no tiny glyph marks, no busy typography-like patterns."
@@ -82,7 +83,6 @@
   },
   "hvac": {
     "label": "home-service",
-    "overlay_business_label": "home-service",
     "overlay_subject": "a clean residential home-service comfort scene with heating and cooling equipment, vents, tools, airflow, or a plain unmarked technician moment; avoid vehicles and text-like graphics",
     "constraints": {
       "in_image": [
@@ -159,6 +159,8 @@
     },
     "qc": {
       "text_score_threshold": 34,
+      "red_text_score_threshold": 55,
+      "blue_text_score_threshold": 95,
       "calm_zone_score_threshold": 88,
       "retry_prompt_append": "Retry correction: use a clean home comfort scene with plain unmarked equipment, no service vehicle, no uniform patch, no wall lettering, and one calm low-detail area for later exact typography.",
       "retry_negative_append": "No readable text, no HVAC lettering, no vehicle decals, no uniform patches, no phone-number-like marks, no currency marks, no service slogans, no labels, no signs, no wall lettering."
@@ -166,8 +168,7 @@
   },
   "real_estate": {
     "label": "real-estate service",
-    "overlay_business_label": "real-estate service",
-    "overlay_subject": "a tight polished residential interior composition with kitchen counters, keys, cabinets, plain walls, or plain moving boxes; keep the view fully inside the home",
+    "overlay_subject": "a tight polished residential interior photo with kitchen counters, keys, cabinets, blank plain walls, or plain unmarked cardboard boxes; keep the view fully inside the home and avoid graphic design elements, framed wall art, posters, or word decor",
     "constraints": {
       "in_image": [
         "Premium real-estate and home-services advertising photography.",
@@ -175,9 +176,9 @@
         "Avoid address numbers, paperwork text, logos, brand marks, or readable documents."
       ],
       "overlay": [
-        "Premium real-estate and home-services advertising photography.",
-        "Modern homes, bright interiors, kitchens, living rooms, hallways, keys, plain moving boxes, or moving-day details are allowed when natural.",
-        "Avoid address numbers, paperwork text, logos, brand marks, or readable documents."
+        "Premium residential interior photography prepared as a text-free source image for a later design layer.",
+        "Modern homes, bright interiors, kitchens, living rooms, hallways, keys, plain unmarked moving boxes, or subtle moving-day details are allowed when natural.",
+        "Avoid address numbers, paperwork text, logos, brand marks, readable documents, decorative symbols, framed wall art, posters, word decor, and sign-like graphic shapes."
       ]
     },
     "negative_prompt_extra": {
@@ -188,7 +189,7 @@
       {
         "slug": "modern_kitchen",
         "title": "Modern Kitchen",
-        "prompt": "A clean modern kitchen and dining area with soft ambient daylight, polished counters, subtle moving-day cues, and premium real-home texture. No paperwork, screens, labels, or readable decor."
+        "prompt": "A clean modern kitchen and dining area with soft ambient daylight, polished counters, blank plain walls, subtle unmarked moving boxes, and premium real-home texture. No paperwork, screens, labels, wall art, posters, symbols, banners, sign-like shapes, or readable decor."
       },
       {
         "slug": "keys_counter",
@@ -220,12 +221,12 @@
       {
         "slug": "trust_clean",
         "title": "Trust Clean",
-        "prompt": "Clean trustworthy service-ad feel, polished but not sterile."
+        "prompt": "Clean trustworthy residential mood, polished but natural, with no ad-like graphic objects."
       }
     ],
-    "llm_art_direction": "For real estate, think like a premium local property-services art director: clean interiors, warm kitchens, living rooms, keys on counters, plain walls, and smooth transaction cues without doors, windows, exterior views, listing props, or documents.",
+    "llm_art_direction": "For home transaction services, think like a premium residential-interior photographer: clean interiors, warm kitchens, living rooms, keys on counters, blank plain walls, and smooth move-ready cues without doors, windows, exterior views, listing props, signs, wall art, posters, graphic marks, or documents.",
     "overlay_guardrails": [
-      "For real-estate overlay prompts, use interior-only close home scenes; avoid doors, windows, porches, exteriors, address numbers, paperwork, contracts, and readable documents."
+      "For real-estate overlay prompts, use interior-only close home scenes; avoid doors, windows, porches, exteriors, address numbers, paperwork, contracts, readable documents, framed wall art, posters, sign-like graphics, and logo-like shapes."
     ],
     "candidate_reject_terms": [
       "door",
@@ -265,9 +266,12 @@
     },
     "qc": {
       "text_score_threshold": 34,
+      "red_text_score_threshold": 55,
+      "blue_text_score_threshold": 12,
+      "sign_block_score_threshold": 50,
       "calm_zone_score_threshold": 88,
-      "retry_prompt_append": "Retry correction: stay fully inside a residential interior, use plain walls and unmarked objects, avoid windows, exterior views, listing signs, address numbers, paperwork, and create one calm low-detail area for later exact typography.",
-      "retry_negative_append": "No readable text, no for-sale signs, no sold signs, no listing signs, no address numbers, no paperwork, no contracts, no documents, no window signs, no door signs, no exterior view, no label-like marks."
+      "retry_prompt_append": "Retry correction: create a normal residential interior photograph only. Use bare ceiling or blank plain wall at the top, plain unmarked objects, and no navy/gold graphic shapes. Avoid windows, exterior views, listing signs, address numbers, paperwork, logos, icons, banners, framed wall art, posters, word decor, and create one calm low-detail area for later exact typography.",
+      "retry_negative_append": "No readable text, no pseudo-text, no for-sale signs, no sold signs, no listing signs, no address numbers, no paperwork, no contracts, no documents, no window signs, no door signs, no exterior view, no label-like marks, no logo-like shapes, no banners, no navy graphic header shapes, no framed wall art, no word decor."
     }
   }
 }

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Any
 
 from sqlalchemy import select
 
@@ -160,7 +162,11 @@ class PersistenceManager:
         prompt_text: str,
         negative_prompt: str,
         background_image_url: str | None = None,
+        qc_summary: dict[str, Any] | None = None,
     ) -> PersistedVariant:
+        qc_text = json.dumps(qc_summary, sort_keys=True) if qc_summary is not None else None
+        qc_passed = bool(qc_summary.get("passed")) if qc_summary else False
+        qc_score = _coerce_optional_float(qc_summary.get("score")) if qc_summary else None
         with self._session_factory() as session:
             variant = (
                 session.execute(
@@ -180,6 +186,9 @@ class PersistenceManager:
                     prompt_text=prompt_text,
                     negative_prompt=negative_prompt,
                     background_image_url=background_image_url,
+                    qc_passed=qc_passed,
+                    qc_text=qc_text,
+                    qc_score=qc_score,
                 )
                 session.add(variant)
             else:
@@ -188,6 +197,10 @@ class PersistenceManager:
                 variant.negative_prompt = negative_prompt
                 if background_image_url is not None:
                     variant.background_image_url = background_image_url
+                if qc_summary is not None:
+                    variant.qc_passed = qc_passed
+                    variant.qc_text = qc_text
+                    variant.qc_score = qc_score
             session.commit()
             session.refresh(variant)
             return PersistedVariant(id=variant.id, index=variant_index)
@@ -237,3 +250,10 @@ class PersistenceManager:
             session.commit()
             session.refresh(asset)
             return asset
+
+
+def _coerce_optional_float(value: Any) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None

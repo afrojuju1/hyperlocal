@@ -17,6 +17,8 @@ services:
       COMFYUI_WORKFLOW_PATH: config/comfyui_workflows/z_image_turbo_background.json
       COMFYUI_OUTPUT_NODE: "10"
       HYPERLOCAL_IMAGE_SIZE: "1024x1536"
+      HYPERLOCAL_QC_ENABLED: "1"
+      HYPERLOCAL_MAX_IMAGE_ATTEMPTS: "3"
     ports:
       - "18000:8000"
     volumes:
@@ -42,6 +44,8 @@ services:
       COMFYUI_WORKFLOW_PATH: config/comfyui_workflows/z_image_turbo_background.json
       COMFYUI_OUTPUT_NODE: "10"
       HYPERLOCAL_IMAGE_SIZE: "1024x1536"
+      HYPERLOCAL_QC_ENABLED: "1"
+      HYPERLOCAL_MAX_IMAGE_ATTEMPTS: "3"
       HYPERLOCAL_CREATIVE_RUN_POLL_INTERVAL: "2"
       HYPERLOCAL_CREATIVE_RUN_MAX_CONCURRENT: "1"
     command: ["uv", "run", "scripts/run_creative_worker.py"]

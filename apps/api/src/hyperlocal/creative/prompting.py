@@ -91,7 +91,7 @@ def base_constraints(*, business_kind: str, text_mode: str, business_name: str, 
         parts += [
             "Keep all product and environmental surfaces plain and unmarked.",
             "Avoid graphic-design elements inside the generated scene.",
-            "Do not render wall lettering, service slogans, prices, phone-number-like digits, vehicle decals, HVAC lettering, or emergency-service text.",
+            "Do not render wall lettering, framed typography, posters, service slogans, prices, phone-number-like digits, vehicle decals, HVAC lettering, or emergency-service text.",
         ]
     return " ".join(parts)
 
@@ -105,6 +105,7 @@ def base_negative_prompt(*, business_kind: str, text_mode: str) -> str:
             "Avoid readable text, misspelled words, coupons, labels, logos, watermarks, menus, and signage. "
             "Avoid numbers, percent signs, offer copy, and business-name lettering. "
             "Avoid currency symbols, 24/7 lettering, wall lettering, decals, truck graphics, service slogans, poster text, and phone-number-like marks. "
+            "Avoid framed wall art with letters, typography posters, and decorative word art. "
             "Avoid distorted faces, extra fingers, broken anatomy, cluttered coupon layouts, and low-quality artifacts."
             + extra
         )
@@ -139,9 +140,8 @@ def _background_intro(*, business_kind: str, product: str, text_mode: str) -> st
         vertical = get_vertical_config(business_kind)
         subject = str(vertical.get("overlay_subject") or "{product} as a realistic product or lifestyle scene")
         subject = subject.format(product=product)
-        business_label = str(vertical.get("overlay_business_label") or business_kind)
         return (
-            f"Create a vertical 6x9 photorealistic campaign image for a local {business_label} business. "
+            "Create a vertical 6x9 photorealistic text-free source image for later ad typography. "
             f"Main visual subject: {subject}. "
         )
     return (
@@ -157,6 +157,7 @@ def _brief_context(
     constraints: list[str] | None = None,
     brand_colors: list[str] | None = None,
     style_keywords: list[str] | None = None,
+    include_brand_colors: bool = True,
 ) -> str:
     parts: list[str] = []
     if tone:
@@ -165,7 +166,7 @@ def _brief_context(
         parts.append(f"Audience: {audience}.")
     if constraints:
         parts.append(f"User constraints: {', '.join(constraints)}.")
-    if brand_colors:
+    if brand_colors and include_brand_colors:
         parts.append(f"Brand color direction: {', '.join(brand_colors)}.")
     if style_keywords:
         parts.append(f"Style keywords: {', '.join(style_keywords)}.")
@@ -248,6 +249,7 @@ def build_template_prompts(
         constraints=_visual_constraints_for_prompt(constraints, text_mode=text_mode),
         brand_colors=brand_colors,
         style_keywords=style_keywords,
+        include_brand_colors=text_mode != "overlay",
     )
     neg = base_negative_prompt(business_kind=business_kind, text_mode=text_mode)
 
@@ -344,6 +346,7 @@ def build_llm_prompts(
         constraints=_visual_constraints_for_prompt(constraints, text_mode=text_mode),
         brand_colors=brand_colors,
         style_keywords=style_keywords,
+        include_brand_colors=text_mode != "overlay",
     )
     neg = base_negative_prompt(business_kind=business_kind, text_mode=text_mode)
     format_prefix = _format_prefix(format_hint, business_kind=business_kind)

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
@@ -86,6 +88,7 @@ def get_creative_run_status(run_id: int) -> CreativeRunStatusResponse:
                 background_image_url=variant.background_image_url or "",
                 final_image_url=variant.final_image_url,
                 overlay_template=variant.overlay_template or "base",
+                **_artifact_qc_fields(variant.qc_text),
             )
         )
 
@@ -127,3 +130,30 @@ def get_creative_run_files(run_id: int) -> CreativeRunFilesResponse:
         if path.is_file()
     ]
     return CreativeRunFilesResponse(run_id=run_id, files=files)
+
+
+def _artifact_qc_fields(raw_qc: str | None) -> dict[str, Any]:
+    if not raw_qc:
+        return {}
+    try:
+        qc = json.loads(raw_qc)
+    except json.JSONDecodeError:
+        return {"qc_enabled": True, "qc_reasons": [raw_qc]}
+    if not isinstance(qc, dict):
+        return {}
+    return {
+        "qc_enabled": bool(qc.get("enabled")),
+        "qc_passed": qc.get("passed"),
+        "qc_score": _coerce_optional_float(qc.get("score")),
+        "qc_attempts": int(qc.get("attempts") or 1),
+        "qc_retries_exhausted": bool(qc.get("retries_exhausted")),
+        "qc_reasons": list(qc.get("reasons") or []),
+        "qc_report_url": _files_url_from_path(qc.get("report_path")),
+    }
+
+
+def _coerce_optional_float(value: Any) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None

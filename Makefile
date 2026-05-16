@@ -7,7 +7,7 @@ DATABASE_URL ?= postgresql://hyperlocal:hyperlocal@localhost:55432/hyperlocal
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup up down logs dev api worker web db-init db-reset check check-api check-web smoke generate clean clean-output
+.PHONY: help setup up down logs dev api worker web db-init db-reset check check-api check-web smoke generate generate-example generate-all-examples clean clean-output
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*## "; printf "Hyperlocal commands:\n"} /^[a-zA-Z0-9_-]+:.*## / {printf "  %-14s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -63,6 +63,17 @@ generate: ## Enqueue a sample creative run against the local API
 		-H "Content-Type: application/json" \
 		--data-binary @examples/creative-run-smoothie.json
 	@printf "\n"
+
+generate-example: ## Run and poll one example, e.g. make generate-example EXAMPLE=hvac
+	@test -n "$(EXAMPLE)" || (echo "Set EXAMPLE, e.g. make generate-example EXAMPLE=hvac"; exit 1)
+	cd $(API_DIR) && PYTHONPATH=src uv run scripts/generate_examples.py \
+		--api-base-url "$(API_BASE_URL)" \
+		--example ../../examples/creative-run-$(EXAMPLE).json
+
+generate-all-examples: ## Run and poll all creative-run examples
+	cd $(API_DIR) && PYTHONPATH=src uv run scripts/generate_examples.py \
+		--api-base-url "$(API_BASE_URL)" \
+		--examples-dir ../../examples
 
 clean: ## Remove local caches only
 	find . -type d -name __pycache__ -prune -exec rm -rf {} +

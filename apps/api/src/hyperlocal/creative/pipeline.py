@@ -54,6 +54,11 @@ class CreativeRunPipeline:
         self._persistence.update_run_progress(run_id, stage="image_render", progress_pct=45)
         generated_images = self._image_generation.generate(request=normalized, run_dir=run_dir)
 
+        qc_by_variant = {
+            generated.variant_index: _summarize_generated_qc(generated)
+            for generated in generated_images
+        }
+
         for generated in generated_images:
             copy_block = copy_blocks[(generated.prompt_index - 1) % len(copy_blocks)]
             self._persistence.create_or_update_variant(
@@ -63,6 +68,7 @@ class CreativeRunPipeline:
                 prompt_text=generated.prompt,
                 negative_prompt=generated.negative_prompt,
                 background_image_url=generated.image_path,
+                qc_summary=qc_by_variant[generated.variant_index],
             )
 
         artifacts: list[CreativeArtifact] = []
@@ -83,6 +89,7 @@ class CreativeRunPipeline:
                     background_image_url=rendered.background_image_url,
                     final_image_url=rendered.final_image_url,
                     overlay_template=rendered.overlay_template,
+                    **_artifact_qc_fields(qc_by_variant.get(rendered.variant_index)),
                 )
                 for rendered in typography
             ]
@@ -101,6 +108,7 @@ class CreativeRunPipeline:
                     background_image_url=rendered.background_image_url,
                     final_image_url=rendered.final_image_url,
                     overlay_template=rendered.overlay_template,
+                    **_artifact_qc_fields(qc_by_variant.get(rendered.variant_index)),
                 )
                 for rendered in overlays
             ]
@@ -187,3 +195,43 @@ class CreativeRunPipeline:
             footer="",
         )
         return [block for _ in range(request.generation.count)]
+
+
+def _summarize_generated_qc(generated) -> dict:
+    raw = generated.qc or {}
+    enabled = bool(raw.get("enabled"))
+    if not enabled:
+        return {
+            "enabled": False,
+            "passed": None,
+            "score": None,
+            "attempts": generated.attempts,
+            "retries_exhausted": False,
+            "reasons": [],
+            "report_path": None,
+        }
+
+    return {
+        "enabled": True,
+        "passed": bool(raw.get("passed")),
+        "score": raw.get("score"),
+        "attempts": generated.attempts,
+        "selected_attempt": raw.get("attempt"),
+        "retries_exhausted": bool(raw.get("selected_after_exhausting_retries")),
+        "reasons": list(raw.get("reasons") or []),
+        "report_path": raw.get("report_path"),
+    }
+
+
+def _artifact_qc_fields(summary: dict | None) -> dict:
+    if not summary:
+        return {}
+    return {
+        "qc_enabled": bool(summary.get("enabled")),
+        "qc_passed": summary.get("passed"),
+        "qc_score": summary.get("score"),
+        "qc_attempts": int(summary.get("attempts") or 1),
+        "qc_retries_exhausted": bool(summary.get("retries_exhausted")),
+        "qc_reasons": list(summary.get("reasons") or []),
+        "qc_report_url": summary.get("report_path"),
+    }

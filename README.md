@@ -29,6 +29,12 @@ Run worker:
 make worker
 ```
 
+Run examples against the local API/worker stack:
+```bash
+make generate-example EXAMPLE=hvac
+make generate-all-examples
+```
+
 ## Frontend
 ```bash
 make web
@@ -102,6 +108,15 @@ HYPERLOCAL_MAX_IMAGE_ATTEMPTS=3
 ```
 
 Rejected attempts are kept under `apps/api/output/creative_runs/<run_id>/generated_images/attempts/`, with JSON reports under `apps/api/output/creative_runs/<run_id>/qc/`. If all attempts fail QC, the pipeline uses the least-bad attempt and records that in the manifest instead of dropping the run.
+
+The run status API exposes compact QC fields per artifact:
+- `qc_enabled`
+- `qc_passed`
+- `qc_attempts`
+- `qc_score`
+- `qc_retries_exhausted`
+- `qc_reasons`
+- `qc_report_url`
 
 ## Vertical Config
 

@@ -137,6 +137,13 @@ class CreativeArtifact(BaseModel):
     background_image_url: str
     final_image_url: str
     overlay_template: str
+    qc_enabled: bool = False
+    qc_passed: bool | None = None
+    qc_score: float | None = None
+    qc_attempts: int = 1
+    qc_retries_exhausted: bool = False
+    qc_reasons: list[str] = Field(default_factory=list)
+    qc_report_url: str | None = None
 
 
 class CreativeRunCreateResponse(BaseModel):

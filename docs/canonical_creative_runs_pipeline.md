@@ -36,6 +36,16 @@ Contains:
 - `GET /api/v1/creative-runs/{run_id}`
 - `GET /api/v1/creative-runs/{run_id}/files`
 
+Run status artifacts include compact QC metadata:
+
+- `qc_enabled`
+- `qc_passed`
+- `qc_attempts`
+- `qc_score`
+- `qc_retries_exhausted`
+- `qc_reasons`
+- `qc_report_url`
+
 ## Worker
 
 Run from `apps/api/`:
@@ -59,6 +69,20 @@ COMFYUI_WORKFLOW_PATH=config/comfyui_workflows/z_image_turbo_background.json
 COMFYUI_OUTPUT_NODE=10
 HYPERLOCAL_QC_ENABLED=1
 HYPERLOCAL_MAX_IMAGE_ATTEMPTS=3
+```
+
+## Example runner
+
+Run one example:
+
+```bash
+make generate-example EXAMPLE=hvac
+```
+
+Run every payload in `examples/`:
+
+```bash
+make generate-all-examples
 ```
 
 ## Vertical configuration

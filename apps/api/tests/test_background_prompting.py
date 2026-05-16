@@ -204,9 +204,10 @@ class BackgroundPromptingTests(unittest.TestCase):
 
         spec = service._build_prompt_specs(request)[0]
 
-        self.assertIn("real-estate service", spec.prompt)
-        self.assertIn("residential interior composition", spec.prompt)
-        self.assertIn("No paperwork, screens, labels, or readable decor", spec.prompt)
+        self.assertIn("text-free source image", spec.prompt)
+        self.assertNotIn("home transition service business", spec.prompt)
+        self.assertIn("residential interior photo", spec.prompt)
+        self.assertIn("No paperwork, screens, labels, wall art, posters", spec.prompt)
         self.assertNotIn("RapidKeys", spec.prompt)
         self.assertNotIn("Close in as little", spec.prompt)
         self.assertNotIn("sale", spec.prompt.lower())
@@ -242,7 +243,7 @@ class BackgroundPromptingTests(unittest.TestCase):
         self.assertIn("Tone: playful but premium.", spec.prompt)
         self.assertIn("Audience: college students near campus.", spec.prompt)
         self.assertIn("User constraints: avoid plastic straws.", spec.prompt)
-        self.assertIn("Brand color direction: mango orange, deep green.", spec.prompt)
+        self.assertNotIn("Brand color direction: mango orange, deep green.", spec.prompt)
         self.assertIn("Style keywords: editorial, sunlit.", spec.prompt)
 
 

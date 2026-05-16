@@ -96,6 +96,13 @@ type Artifact = {
   background_image_url: string;
   final_image_url: string;
   overlay_template: string;
+  qc_enabled?: boolean;
+  qc_passed?: boolean | null;
+  qc_score?: number | null;
+  qc_attempts?: number;
+  qc_retries_exhausted?: boolean;
+  qc_reasons?: string[];
+  qc_report_url?: string | null;
 };
 
 type RunStatus = {
@@ -107,6 +114,33 @@ type RunStatus = {
   output_dir?: string | null;
   manifest_url?: string | null;
   artifacts: Artifact[];
+};
+
+const qcStatusLabel = (artifact: Artifact) => {
+  if (!artifact.qc_enabled) {
+    return "QC off";
+  }
+  if (artifact.qc_passed) {
+    return `QC passed after ${artifact.qc_attempts || 1} attempt${
+      artifact.qc_attempts === 1 ? "" : "s"
+    }`;
+  }
+  if (artifact.qc_retries_exhausted) {
+    return `QC needs review after ${artifact.qc_attempts || 1} attempts`;
+  }
+  return `QC failed after ${artifact.qc_attempts || 1} attempt${
+    artifact.qc_attempts === 1 ? "" : "s"
+  }`;
+};
+
+const qcStatusClasses = (artifact: Artifact) => {
+  if (!artifact.qc_enabled) {
+    return "border-zinc-200 bg-zinc-50 text-zinc-600";
+  }
+  if (artifact.qc_passed) {
+    return "border-emerald-200 bg-emerald-50 text-emerald-800";
+  }
+  return "border-amber-200 bg-amber-50 text-amber-800";
 };
 
 export default function Home() {
@@ -406,6 +440,21 @@ export default function Home() {
                     )}
                     <div className="mt-3 text-xs text-zinc-600">
                       Template: {artifact.overlay_template}
+                    </div>
+                    <div
+                      className={`mt-3 rounded-xl border px-3 py-2 text-xs ${qcStatusClasses(
+                        artifact,
+                      )}`}
+                    >
+                      <div className="font-semibold">{qcStatusLabel(artifact)}</div>
+                      {artifact.qc_score !== null && artifact.qc_score !== undefined && (
+                        <div className="mt-1">Score: {artifact.qc_score.toFixed(2)}</div>
+                      )}
+                      {artifact.qc_reasons && artifact.qc_reasons.length > 0 && (
+                        <div className="mt-1">
+                          Reasons: {artifact.qc_reasons.join(", ")}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

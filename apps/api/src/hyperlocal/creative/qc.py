@@ -14,6 +14,8 @@ from hyperlocal.integrations.openai import chat_content, image_url_from_path
 
 
 _DEFAULT_TEXT_SCORE_THRESHOLD = 34.0
+_DEFAULT_RED_TEXT_SCORE_THRESHOLD = 55.0
+_DEFAULT_BLUE_TEXT_SCORE_THRESHOLD = 95.0
 _DEFAULT_CALM_ZONE_SCORE_THRESHOLD = 88.0
 
 
@@ -82,23 +84,52 @@ def evaluate_background_image(
     """Cheap deterministic QC for text-free source images before typography rendering."""
     cfg = vertical_qc_config(business_kind)
     text_threshold = float(cfg.get("text_score_threshold", _DEFAULT_TEXT_SCORE_THRESHOLD))
+    red_text_threshold = float(
+        cfg.get(
+            "red_text_score_threshold",
+            cfg.get("color_text_score_threshold", _DEFAULT_RED_TEXT_SCORE_THRESHOLD),
+        )
+    )
+    blue_text_threshold = float(cfg.get("blue_text_score_threshold", _DEFAULT_BLUE_TEXT_SCORE_THRESHOLD))
     calm_threshold = float(cfg.get("calm_zone_score_threshold", _DEFAULT_CALM_ZONE_SCORE_THRESHOLD))
+    sign_block_threshold = _coerce_optional_float(cfg.get("sign_block_score_threshold"))
 
     base = Image.open(image_path).convert("RGB")
     text_score = _text_artifact_score(base)
+    red_text_score = _red_text_artifact_score(base)
+    blue_text_score = _blue_text_artifact_score(base)
+    color_text_score = max(red_text_score, blue_text_score)
+    sign_block_score = _sign_block_score(base) if sign_block_threshold is not None else 0.0
     calm_metrics = _calm_zone_metrics(base)
     calm_score = float(calm_metrics["best_score"])
 
     reasons: list[str] = []
-    if text_score > text_threshold:
+    if (
+        text_score > text_threshold
+        or red_text_score > red_text_threshold
+        or blue_text_score > blue_text_threshold
+        or (sign_block_threshold is not None and sign_block_score > sign_block_threshold)
+    ):
         reasons.append("possible_background_text")
     if calm_score > calm_threshold:
         reasons.append("no_calm_typography_zone")
 
-    score = round(text_score + max(0.0, calm_score - calm_threshold), 3)
+    score = round(
+        max(text_score, color_text_score, sign_block_score)
+        + max(0.0, calm_score - calm_threshold),
+        3,
+    )
     metrics: dict[str, Any] = {
         "text_score": round(text_score, 3),
         "text_score_threshold": text_threshold,
+        "color_text_score": round(color_text_score, 3),
+        "color_text_score_threshold": min(red_text_threshold, blue_text_threshold),
+        "red_text_score": round(red_text_score, 3),
+        "red_text_score_threshold": red_text_threshold,
+        "blue_text_score": round(blue_text_score, 3),
+        "blue_text_score_threshold": blue_text_threshold,
+        "sign_block_score": round(sign_block_score, 3),
+        "sign_block_score_threshold": sign_block_threshold,
         "best_calm_zone_score": round(calm_score, 3),
         "calm_zone_score_threshold": calm_threshold,
         **calm_metrics,
@@ -240,6 +271,90 @@ def _text_artifact_score(base: Image.Image) -> float:
     return (density * 100.0) + (row_concentration * 80.0)
 
 
+def _red_text_artifact_score(base: Image.Image) -> float:
+    width = 320
+    height = max(1, round(base.height * (width / base.width)))
+    image = base.resize((width, height))
+    tile_w = 20
+    tile_h = 12
+    textlike_tiles = 0
+    total_tiles = 0
+    row_counts: list[int] = []
+
+    for y in range(0, max(1, height - tile_h + 1), tile_h):
+        row_count = 0
+        for x in range(0, max(1, width - tile_w + 1), tile_w):
+            crop = image.crop((x, y, min(width, x + tile_w), min(height, y + tile_h)))
+            if _tile_has_red_textlike_color(crop):
+                textlike_tiles += 1
+                row_count += 1
+            total_tiles += 1
+        row_counts.append(row_count)
+
+    if total_tiles == 0:
+        return 0.0
+    tiles_per_row = max(1, width // tile_w)
+    density = textlike_tiles / total_tiles
+    row_concentration = (max(row_counts) / tiles_per_row) if row_counts else 0.0
+    return (density * 100.0) + (row_concentration * 120.0)
+
+
+def _blue_text_artifact_score(base: Image.Image) -> float:
+    width = 320
+    height = max(1, round(base.height * (width / base.width)))
+    image = base.resize((width, height))
+    tile_w = 20
+    tile_h = 12
+    textlike_tiles = 0
+    total_tiles = 0
+    row_counts: list[int] = []
+
+    for y in range(0, max(1, height - tile_h + 1), tile_h):
+        if not height * 0.08 <= y <= height * 0.62:
+            continue
+        row_count = 0
+        for x in range(0, max(1, width - tile_w + 1), tile_w):
+            crop = image.crop((x, y, min(width, x + tile_w), min(height, y + tile_h)))
+            if _tile_has_blue_textlike_color(crop):
+                textlike_tiles += 1
+                row_count += 1
+            total_tiles += 1
+        row_counts.append(row_count)
+
+    if total_tiles == 0:
+        return 0.0
+    tiles_per_row = max(1, width // tile_w)
+    density = textlike_tiles / total_tiles
+    row_concentration = (max(row_counts) / tiles_per_row) if row_counts else 0.0
+    return (density * 100.0) + (row_concentration * 120.0)
+
+
+def _sign_block_score(base: Image.Image) -> float:
+    width = 320
+    height = max(1, round(base.height * (width / base.width)))
+    image = base.resize((width, height))
+    tile_w = 16
+    tile_h = 16
+    signlike_tiles = 0
+    row_counts: list[int] = []
+
+    for y in range(0, max(1, height - tile_h + 1), tile_h):
+        if not height * 0.10 <= y <= height * 0.55:
+            continue
+        row_count = 0
+        for x in range(0, max(1, width - tile_w + 1), tile_w):
+            if not width * 0.25 <= x <= width * 0.80:
+                continue
+            crop = image.crop((x, y, min(width, x + tile_w), min(height, y + tile_h)))
+            if _tile_has_signlike_color_block(crop):
+                signlike_tiles += 1
+                row_count += 1
+        row_counts.append(row_count)
+
+    max_row = max(row_counts) if row_counts else 0
+    return float(signlike_tiles + (max_row * 8))
+
+
 def _tile_is_textlike(tile: Image.Image) -> bool:
     width, height = tile.size
     px = tile.load()
@@ -268,3 +383,121 @@ def _tile_is_textlike(tile: Image.Image) -> bool:
     extreme_ratio = min(dark_ratio, light_ratio)
 
     return stddev > 36 and edge > 20 and 0.015 <= extreme_ratio <= 0.48
+
+
+def _tile_has_red_textlike_color(tile: Image.Image) -> bool:
+    width, height = tile.size
+    px = tile.load()
+    mask: list[list[int]] = []
+    colored = 0
+    for y in range(height):
+        row: list[int] = []
+        for x in range(width):
+            red, green, blue = px[x, y]
+            is_text_red = (
+                red > 130
+                and green < 100
+                and blue < 115
+                and red - green > 55
+                and red - blue > 55
+            )
+            row.append(1 if is_text_red else 0)
+            colored += 1 if is_text_red else 0
+        mask.append(row)
+
+    total = max(1, width * height)
+    ratio = colored / total
+    if not 0.02 <= ratio <= 0.7:
+        return False
+
+    edge_total = 0
+    edge_count = 0
+    for y in range(height):
+        for x in range(max(0, width - 1)):
+            edge_total += abs(mask[y][x] - mask[y][x + 1])
+            edge_count += 1
+    for y in range(max(0, height - 1)):
+        for x in range(width):
+            edge_total += abs(mask[y][x] - mask[y + 1][x])
+            edge_count += 1
+    edge = edge_total / max(1, edge_count)
+    return edge >= 0.035
+
+
+def _tile_has_blue_textlike_color(tile: Image.Image) -> bool:
+    width, height = tile.size
+    px = tile.load()
+    mask: list[list[int]] = []
+    colored = 0
+    for y in range(height):
+        row: list[int] = []
+        for x in range(width):
+            red, green, blue = px[x, y]
+            is_text_blue = (
+                blue > 80
+                and blue - red > 28
+                and blue - green > 12
+                and red < 120
+            ) or (
+                blue > 55
+                and red < 70
+                and green < 110
+                and blue - red > 20
+            )
+            row.append(1 if is_text_blue else 0)
+            colored += 1 if is_text_blue else 0
+        mask.append(row)
+
+    total = max(1, width * height)
+    ratio = colored / total
+    if not 0.02 <= ratio <= 0.75:
+        return False
+
+    edge_total = 0
+    edge_count = 0
+    for y in range(height):
+        for x in range(max(0, width - 1)):
+            edge_total += abs(mask[y][x] - mask[y][x + 1])
+            edge_count += 1
+    for y in range(max(0, height - 1)):
+        for x in range(width):
+            edge_total += abs(mask[y][x] - mask[y + 1][x])
+            edge_count += 1
+    edge = edge_total / max(1, edge_count)
+    return edge >= 0.03
+
+
+def _tile_has_signlike_color_block(tile: Image.Image) -> bool:
+    width, height = tile.size
+    px = tile.load()
+    colored = 0
+    for y in range(height):
+        for x in range(width):
+            red, green, blue = px[x, y]
+            is_red = (
+                red > 130
+                and green < 115
+                and blue < 115
+                and red - green > 45
+                and red - blue > 45
+            )
+            is_blue = (
+                blue > 80
+                and blue - red > 28
+                and blue - green > 12
+                and red < 120
+            ) or (
+                blue > 55
+                and red < 70
+                and green < 110
+                and blue - red > 20
+            )
+            colored += 1 if is_red or is_blue else 0
+    return (colored / max(1, width * height)) > 0.08
+
+
+def _coerce_optional_float(value: Any) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None

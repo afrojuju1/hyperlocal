@@ -51,6 +51,94 @@ class BackgroundQcTests(unittest.TestCase):
             self.assertIn("possible_background_text", result.reasons)
             self.assertGreater(result.metrics["text_score"], result.metrics["text_score_threshold"])
 
+    def test_red_wall_text_fails_color_text_qc(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "red_text.png"
+            image = Image.new("RGB", (360, 540), "#f4f1ea")
+            draw = ImageDraw.Draw(image)
+            try:
+                font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial Bold.ttf", 54)
+            except OSError:
+                font = ImageFont.load_default()
+            draw.text((95, 180), "HOME", fill="#cc0000", font=font)
+            draw.text((80, 242), "COMFORT", fill="#cc0000", font=font)
+            image.save(path)
+
+            result = evaluate_background_image(image_path=path, business_kind="hvac")
+
+            self.assertFalse(result.passed)
+            self.assertIn("possible_background_text", result.reasons)
+            self.assertGreater(
+                result.metrics["color_text_score"],
+                result.metrics["color_text_score_threshold"],
+            )
+
+    def test_orange_product_color_does_not_fail_color_text_qc(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "orange_product.png"
+            image = Image.new("RGB", (360, 540), "#f4f1ea")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((75, 170, 285, 380), fill="#f58220")
+            image.save(path)
+
+            result = evaluate_background_image(image_path=path, business_kind="smoothie")
+
+            self.assertTrue(result.passed)
+
+    def test_large_blue_signage_fails_color_text_qc(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "blue_sign.png"
+            image = Image.new("RGB", (360, 540), "#f4f1ea")
+            draw = ImageDraw.Draw(image)
+            try:
+                font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial Bold.ttf", 76)
+            except OSError:
+                font = ImageFont.load_default()
+            draw.text((20, 80), "HOME", fill="#062a63", font=font)
+            draw.text((20, 155), "SELLERS", fill="#062a63", font=font)
+            image.save(path)
+
+            result = evaluate_background_image(image_path=path, business_kind="real_estate")
+
+            self.assertFalse(result.passed)
+            self.assertIn("possible_background_text", result.reasons)
+            self.assertGreater(
+                result.metrics["blue_text_score"],
+                result.metrics["blue_text_score_threshold"],
+            )
+
+    def test_lower_blue_cabinets_do_not_fail_real_estate_qc(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "blue_cabinets.png"
+            image = Image.new("RGB", (360, 540), "#f4f1ea")
+            draw = ImageDraw.Draw(image)
+            draw.rectangle((0, 340, 360, 540), fill="#16324f")
+            draw.rectangle((25, 375, 150, 500), outline="#0a2038", width=6)
+            draw.rectangle((195, 375, 320, 500), outline="#0a2038", width=6)
+            image.save(path)
+
+            result = evaluate_background_image(image_path=path, business_kind="real_estate")
+
+            self.assertTrue(result.passed)
+
+    def test_small_real_estate_wall_sign_fails_sign_block_qc(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "wall_sign.png"
+            image = Image.new("RGB", (360, 540), "#f4f1ea")
+            draw = ImageDraw.Draw(image)
+            draw.rectangle((145, 120, 220, 138), fill="#0b2d66")
+            draw.rectangle((145, 142, 220, 174), fill="#b81f1f")
+            image.save(path)
+
+            result = evaluate_background_image(image_path=path, business_kind="real_estate")
+
+            self.assertFalse(result.passed)
+            self.assertIn("possible_background_text", result.reasons)
+            self.assertGreater(
+                result.metrics["sign_block_score"],
+                result.metrics["sign_block_score_threshold"],
+            )
+
     def test_fully_busy_background_fails_calm_zone_qc(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "busy.png"

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import unittest
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -30,6 +31,7 @@ class FakeVariant:
     final_image_url: str
     overlay_template: str
     background_image_url: str | None = None
+    qc_text: str | None = None
 
 
 class FakeManager:
@@ -59,6 +61,17 @@ class FakeManager:
                 final_image_url="output/creative_runs/1/final/001.png",
                 overlay_template="classic_center",
                 background_image_url="output/creative_runs/1/generated_images/001.png",
+                qc_text=json.dumps(
+                    {
+                        "enabled": True,
+                        "passed": True,
+                        "score": 4.25,
+                        "attempts": 2,
+                        "retries_exhausted": False,
+                        "reasons": [],
+                        "report_path": "output/creative_runs/1/qc/001.json",
+                    }
+                ),
             )
         ]
 
@@ -100,6 +113,11 @@ class CreativeRunsApiTests(unittest.TestCase):
             data = status_resp.json()
             self.assertEqual(data["status"], "QUEUED")
             self.assertEqual(len(data["artifacts"]), 1)
+            artifact = data["artifacts"][0]
+            self.assertTrue(artifact["qc_enabled"])
+            self.assertTrue(artifact["qc_passed"])
+            self.assertEqual(artifact["qc_attempts"], 2)
+            self.assertEqual(artifact["qc_report_url"], "/files/creative_runs/1/qc/001.json")
 
 
 if __name__ == "__main__":
