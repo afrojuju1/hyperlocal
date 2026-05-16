@@ -4,8 +4,8 @@ from dataclasses import dataclass
 
 from openai import OpenAI
 
-from hyperlocal.config import MODEL_CONFIG, RUNTIME_CONFIG
-from hyperlocal.openai_helpers import build_client
+from hyperlocal.core.config import MODEL_CONFIG, RUNTIME_CONFIG
+from hyperlocal.integrations.openai import build_client
 
 
 @dataclass(frozen=True)

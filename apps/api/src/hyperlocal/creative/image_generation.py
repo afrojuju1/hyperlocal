@@ -3,18 +3,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from hyperlocal.comfyui_provider import (
+from hyperlocal.integrations.comfyui import (
     build_comfyui_config,
     generate_comfyui_background_image,
 )
-from hyperlocal.config import MODEL_CONFIG, RUNTIME_CONFIG
-from hyperlocal.contracts.creative_runs import CreativeRunRequest
-from hyperlocal.image_providers import (
+from hyperlocal.core.config import MODEL_CONFIG, RUNTIME_CONFIG
+from hyperlocal.creative.contracts import CreativeRunRequest
+from hyperlocal.integrations.images import (
     build_ollama_image_config,
     generate_ollama_image,
 )
-from hyperlocal.openai_helpers import build_client, generate_image
-from hyperlocal.ad_prompting import build_llm_prompts, build_template_prompts
+from hyperlocal.integrations.openai import build_client, generate_image
+from hyperlocal.creative.prompting import build_llm_prompts, build_template_prompts
 
 
 @dataclass(frozen=True)

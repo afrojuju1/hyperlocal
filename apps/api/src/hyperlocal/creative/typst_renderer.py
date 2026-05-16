@@ -4,8 +4,8 @@ import json
 import subprocess
 from pathlib import Path
 
-from hyperlocal.schemas import BrandStyle, CopyVariant, CreativeBrief
-from hyperlocal.prompt_templates import _format_hours
+from hyperlocal.creative.schemas import BrandStyle, CopyVariant, CreativeBrief
+from hyperlocal.creative.prompt_templates import _format_hours
 
 
 _NAMED_COLORS: dict[str, tuple[int, int, int]] = {

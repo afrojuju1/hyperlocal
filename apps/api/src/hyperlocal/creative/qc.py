@@ -5,7 +5,7 @@ from difflib import SequenceMatcher
 
 from openai import OpenAI
 
-from hyperlocal.openai_helpers import chat_content, image_url_from_path
+from hyperlocal.integrations.openai import chat_content, image_url_from_path
 
 
 def _normalize(text: str) -> str:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from hyperlocal.schemas import BrandStyle, CopyVariant, CreativeBrief, BusinessDetails, BusinessHours
+from hyperlocal.creative.schemas import BrandStyle, CopyVariant, CreativeBrief, BusinessDetails, BusinessHours
 
 
 def _format_hours(details: BusinessDetails | None) -> str:

@@ -9,9 +9,9 @@ from typing import Any
 
 import httpx
 
-from hyperlocal.openai_helpers import ImageResult
-from hyperlocal.prompt_templates import business_block
-from hyperlocal.schemas import BrandStyle, CopyVariant, CreativeBrief
+from hyperlocal.integrations.openai import ImageResult
+from hyperlocal.creative.prompt_templates import business_block
+from hyperlocal.creative.schemas import BrandStyle, CopyVariant, CreativeBrief
 
 
 _PLACEHOLDER_PATTERN = re.compile(r"\{\{[^}]+\}\}")
@@ -76,11 +76,11 @@ def _resolve_workflow_path(path: str) -> Path:
     workflow_path = Path(path)
     if workflow_path.exists():
         return workflow_path
-    backend_root = Path(__file__).resolve().parents[1]
-    backend_candidate = backend_root / workflow_path
-    if backend_candidate.exists():
-        return backend_candidate
-    repo_root = backend_root.parent
+    app_root = Path(__file__).resolve().parents[3]
+    app_candidate = app_root / workflow_path
+    if app_candidate.exists():
+        return app_candidate
+    repo_root = app_root.parents[1]
     repo_candidate = repo_root / workflow_path
     if repo_candidate.exists():
         return repo_candidate

@@ -16,7 +16,7 @@ def build_engine(database_url: str | None = None):
 
 def init_db(database_url: str | None = None):
     engine = build_engine(database_url)
-    from hyperlocal.models import Base
+    from hyperlocal.persistence.models import Base
 
     Base.metadata.create_all(engine)
     _apply_sql_patches(engine)
@@ -32,11 +32,7 @@ def _apply_sql_patches(engine) -> None:
     """
     Best-effort schema patching for existing DBs using ordered SQL migration files.
     """
-    migrations_dir = (
-        Path(__file__).resolve().parents[1]
-        / "sql"
-        / "migrations"
-    )
+    migrations_dir = Path(__file__).resolve().parents[3] / "sql" / "migrations"
     if not migrations_dir.exists() or not migrations_dir.is_dir():
         return
     migration_files = sorted(

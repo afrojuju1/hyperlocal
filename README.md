@@ -37,6 +37,13 @@ make web
 - Backend API: `18000`
 - Frontend: `13000`
 
+## Monorepo Layout
+- `apps/api`: FastAPI API, creative worker, Python domain code, SQL, and API config.
+- `apps/web`: Next.js web app.
+- `examples`: sample API payloads for local runs.
+- `docs`: architecture and operations notes.
+- `output`: ignored generated assets.
+
 ## Canonical MVP Flow
 1. `POST /api/v1/creative-runs` to enqueue a run.
 2. Worker claims `QUEUED` runs and executes generation.

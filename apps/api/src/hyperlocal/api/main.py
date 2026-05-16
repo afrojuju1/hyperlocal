@@ -8,9 +8,9 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 from hyperlocal.api.routes.creative_runs import router as creative_runs_router
-from hyperlocal.config import RUNTIME_CONFIG
-from hyperlocal.db import init_db
-from hyperlocal.health import run_health_checks
+from hyperlocal.core.config import RUNTIME_CONFIG
+from hyperlocal.persistence.db import init_db
+from hyperlocal.core.health import run_health_checks
 
 app = FastAPI(title="Hyperlocal API")
 

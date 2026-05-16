@@ -14,8 +14,8 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from hyperlocal.config import RUNTIME_CONFIG
-from hyperlocal.deterministic_overlay import (
+from hyperlocal.core.config import RUNTIME_CONFIG
+from hyperlocal.creative.deterministic_overlay import (
     OverlayCopy,
     TemplateVariant,
     compose_deterministic_overlay,

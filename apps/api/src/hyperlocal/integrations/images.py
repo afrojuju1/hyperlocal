@@ -6,7 +6,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from hyperlocal.openai_helpers import ImageResult
+from hyperlocal.integrations.openai import ImageResult
 
 
 @dataclass

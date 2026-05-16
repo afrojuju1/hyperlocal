@@ -3,13 +3,13 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from hyperlocal.contracts.creative_runs import (
+from hyperlocal.creative.contracts import (
     CreativeBusinessInput,
     CreativeCampaignInput,
     CreativeGenerationOptions,
     CreativeRunRequest,
 )
-from hyperlocal.services.image_generation import ImageGenerationService
+from hyperlocal.creative.image_generation import ImageGenerationService
 
 
 class BackgroundPromptingTests(unittest.TestCase):
@@ -60,7 +60,7 @@ class BackgroundPromptingTests(unittest.TestCase):
         )
 
         with patch(
-            "hyperlocal.services.image_generation.build_llm_prompts",
+            "hyperlocal.creative.image_generation.build_llm_prompts",
             side_effect=RuntimeError("llm offline"),
         ):
             specs = service._build_prompt_specs(request)

@@ -34,15 +34,15 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from hyperlocal.comfyui_provider import build_comfyui_config, generate_comfyui_background_image
-from hyperlocal.config import MODEL_CONFIG, RUNTIME_CONFIG
-from hyperlocal.image_providers import (
+from hyperlocal.integrations.comfyui import build_comfyui_config, generate_comfyui_background_image
+from hyperlocal.core.config import MODEL_CONFIG, RUNTIME_CONFIG
+from hyperlocal.integrations.images import (
     build_ollama_image_config,
     generate_ollama_image,
 )
-from hyperlocal.openai_helpers import build_client, generate_image
+from hyperlocal.integrations.openai import build_client, generate_image
 
-from hyperlocal.ad_prompting import build_llm_prompts, build_template_prompts
+from hyperlocal.creative.prompting import build_llm_prompts, build_template_prompts
 
 
 def timestamp() -> str:

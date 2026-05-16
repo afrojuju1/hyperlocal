@@ -9,8 +9,8 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from hyperlocal.db import build_engine
-from hyperlocal.models import Base
+from hyperlocal.persistence.db import build_engine
+from hyperlocal.persistence.models import Base
 
 
 def main() -> None:

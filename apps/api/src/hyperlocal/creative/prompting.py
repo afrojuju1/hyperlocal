@@ -27,9 +27,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from hyperlocal.config import RUNTIME_CONFIG
-from hyperlocal.llm_providers import build_llm_clients
-from hyperlocal.openai_helpers import chat_json
+from hyperlocal.core.config import RUNTIME_CONFIG
+from hyperlocal.integrations.llm import build_llm_clients
+from hyperlocal.integrations.openai import chat_json
 
 
 @dataclass(frozen=True)

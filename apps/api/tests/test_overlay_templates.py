@@ -3,8 +3,8 @@ from __future__ import annotations
 import random
 import unittest
 
-from hyperlocal.deterministic_overlay import TemplateVariant
-from hyperlocal.services.overlay_rendering import OverlayRenderingService
+from hyperlocal.creative.deterministic_overlay import TemplateVariant
+from hyperlocal.creative.overlay_rendering import OverlayRenderingService
 
 
 class OverlayTemplateSelectionTests(unittest.TestCase):

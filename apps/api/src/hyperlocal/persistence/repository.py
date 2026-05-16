@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 
 from sqlalchemy import select
 
-from hyperlocal.models import CreativeAsset, CreativeRun, CreativeVariant
-from hyperlocal.schemas import CopyVariant
+from hyperlocal.persistence.models import CreativeAsset, CreativeRun, CreativeVariant
+from hyperlocal.creative.schemas import CopyVariant
 
 
 @dataclass

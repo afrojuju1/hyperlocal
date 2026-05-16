@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_MODELS = ["x/z-image-turbo", "x/flux2-klein"]
 DEFAULT_PROMPTS = [
     "A storefront sign that says \"BAKERY\" in gold letters, photorealistic",

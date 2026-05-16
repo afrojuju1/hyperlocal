@@ -5,8 +5,8 @@ from typing import Any
 
 import httpx
 
-from hyperlocal.config import RUNTIME_CONFIG
-from hyperlocal.llm_providers import resolve_llm_base_url
+from hyperlocal.core.config import RUNTIME_CONFIG
+from hyperlocal.integrations.llm import resolve_llm_base_url
 
 
 @dataclass

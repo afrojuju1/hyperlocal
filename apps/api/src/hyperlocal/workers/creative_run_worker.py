@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import time
 
-from hyperlocal.contracts.creative_runs import CreativeRunRequest
-from hyperlocal.persistence import PersistenceManager
-from hyperlocal.pipelines.creative_runs import CreativeRunPipeline
+from hyperlocal.creative.contracts import CreativeRunRequest
+from hyperlocal.persistence.repository import PersistenceManager
+from hyperlocal.creative.pipeline import CreativeRunPipeline
 
 
 class CreativeRunWorker:

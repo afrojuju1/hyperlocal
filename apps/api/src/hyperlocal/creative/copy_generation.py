@@ -4,9 +4,9 @@ import json
 import re
 from dataclasses import dataclass
 
-from hyperlocal.contracts.creative_runs import CreativeCopyInput, CreativeRunRequest
-from hyperlocal.llm_providers import build_llm_clients
-from hyperlocal.openai_helpers import chat_json
+from hyperlocal.creative.contracts import CreativeCopyInput, CreativeRunRequest
+from hyperlocal.integrations.llm import build_llm_clients
+from hyperlocal.integrations.openai import chat_json
 
 
 _OFFER_LANGUAGE_RE = re.compile(

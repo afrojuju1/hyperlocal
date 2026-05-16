@@ -4,15 +4,15 @@ import random
 from dataclasses import dataclass
 from pathlib import Path
 
-from hyperlocal.contracts.creative_runs import CreativeCopyInput, CreativeRunRequest
-from hyperlocal.deterministic_overlay import (
+from hyperlocal.creative.contracts import CreativeCopyInput, CreativeRunRequest
+from hyperlocal.creative.deterministic_overlay import (
     OverlayCopy,
     TemplateVariant,
     compose_deterministic_overlay,
     load_brand_kit,
     resolve_template,
 )
-from hyperlocal.services.image_generation import GeneratedCreative
+from hyperlocal.creative.image_generation import GeneratedCreative
 
 
 @dataclass(frozen=True)
@@ -94,11 +94,11 @@ class OverlayRenderingService:
         p = Path(brand_kit)
         if p.is_absolute() and p.exists():
             return str(p)
-        backend_root = Path(__file__).resolve().parents[2]
-        candidate = backend_root / brand_kit
+        app_src_root = Path(__file__).resolve().parents[2]
+        candidate = app_src_root / brand_kit
         if candidate.exists():
             return str(candidate)
-        repo_candidate = backend_root.parent / brand_kit
+        repo_candidate = app_src_root.parent / brand_kit
         if repo_candidate.exists():
             return str(repo_candidate)
         raise FileNotFoundError(f"Brand kit not found: {brand_kit}")

@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import unittest
 
-from hyperlocal.contracts.creative_runs import (
+from hyperlocal.creative.contracts import (
     CreativeBusinessInput,
     CreativeCampaignInput,
     CreativeCopyInput,
     CreativeOverlayOptions,
     CreativeRunRequest,
 )
-from hyperlocal.services.copy_generation import CopyGenerationService
+from hyperlocal.creative.copy_generation import CopyGenerationService
 
 
 def make_request(copy_mode: str = "auto", provided_copy: CreativeCopyInput | None = None) -> CreativeRunRequest:
