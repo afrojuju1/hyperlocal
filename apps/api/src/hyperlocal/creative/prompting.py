@@ -28,6 +28,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from hyperlocal.core.config import RUNTIME_CONFIG
+from hyperlocal.creative.vertical_config import (
+    get_vertical_config,
+    vertical_items,
+    vertical_mode_list,
+    vertical_mode_text,
+    vertical_strings,
+)
 from hyperlocal.integrations.llm import build_llm_clients
 from hyperlocal.integrations.openai import chat_json
 
@@ -40,7 +47,7 @@ class PromptSpec:
     negative_prompt: str
     text_mode: str  # overlay | in_image
     format_hint: str  # ad_creative | flyer | poster | flyer_poster
-    business_kind: str  # smoothie | hvac
+    business_kind: str
     business_name: str
     offer: str
     product: str
@@ -79,24 +86,7 @@ def base_constraints(*, business_kind: str, text_mode: str, business_name: str, 
             "High-quality, polished, campaign-ready image with strong visual taste.",
             "Use an intentional focal point and keep at least one open, calm area for the later design layer.",
         ]
-    if business_kind == "smoothie":
-        parts += [
-            "Premium food, beverage, or lifestyle advertising photography.",
-            "Clear cups, fresh fruit, shop atmosphere, motion, splashes, natural hands, or editorial props are allowed when they improve the concept.",
-            "Avoid readable product labels or brand marks.",
-        ]
-    elif business_kind == "hvac":
-        parts += [
-            "Premium home-service advertising photography.",
-            "Modern homes, heating and cooling equipment, vents, tools, plain unmarked technician workwear, families, seasonal comfort cues, or subtle airflow are allowed when natural and safe.",
-            "Avoid service vehicles, readable decals, uniform patches, brand marks, screens with text, or unsafe work scenes.",
-        ]
-    else:  # real_estate
-        parts += [
-            "Premium real-estate and home-services advertising photography.",
-            "Modern homes, bright interiors, kitchens, living rooms, hallways, keys, plain moving boxes, or moving-day details are allowed when natural.",
-            "Avoid address numbers, paperwork text, logos, brand marks, or readable documents.",
-        ]
+    parts.extend(vertical_mode_list(business_kind, "constraints", text_mode))
     if text_mode == "overlay":
         parts += [
             "Keep all product and environmental surfaces plain and unmarked.",
@@ -107,11 +97,9 @@ def base_constraints(*, business_kind: str, text_mode: str, business_name: str, 
 
 
 def base_negative_prompt(*, business_kind: str, text_mode: str) -> str:
-    extra = ""
-    if business_kind == "hvac":
-        extra = " Avoid unsafe work scenes, service vehicles, readable decals, uniform patches, and HVAC lettering."
-    if business_kind == "real_estate":
-        extra = " Avoid real estate yard signs, window signs, door signs, sale lettering, sold lettering, address numbers, paperwork text, and readable documents."
+    extra = vertical_mode_text(business_kind, "negative_prompt_extra", text_mode)
+    if extra:
+        extra = f" {extra}"
     if text_mode == "overlay":
         return (
             "Avoid readable text, misspelled words, coupons, labels, logos, watermarks, menus, and signage. "
@@ -141,28 +129,17 @@ def _format_prefix(format_hint: str, *, business_kind: str) -> str:
         return "poster-style promo creative"
     if format_hint == "flyer_poster":
         return "direct-mail flyer / poster-style promo creative"
-    if business_kind == "hvac":
+    if get_vertical_config(business_kind).get("label") == "home-service":
         return "commercial service ad creative image"
     return "commercial ad creative image"
 
 
 def _background_intro(*, business_kind: str, product: str, text_mode: str) -> str:
     if text_mode == "overlay":
-        if business_kind == "hvac":
-            subject = (
-                "a clean residential home-service comfort scene with heating and cooling equipment, vents, "
-                "tools, airflow, or a plain unmarked technician moment; avoid vehicles and text-like graphics"
-            )
-            business_label = "home-service"
-        elif business_kind == "real_estate":
-            subject = (
-                "a tight polished residential interior composition with kitchen counters, keys, cabinets, "
-                "plain walls, or plain moving boxes; keep the view fully inside the home"
-            )
-            business_label = "real-estate service"
-        else:
-            subject = f"{product} as a realistic product or lifestyle scene"
-            business_label = business_kind
+        vertical = get_vertical_config(business_kind)
+        subject = str(vertical.get("overlay_subject") or "{product} as a realistic product or lifestyle scene")
+        subject = subject.format(product=product)
+        business_label = str(vertical.get("overlay_business_label") or business_kind)
         return (
             f"Create a vertical 6x9 photorealistic campaign image for a local {business_label} business. "
             f"Main visual subject: {subject}. "
@@ -217,127 +194,25 @@ def _visual_audience_for_prompt(
     business_kind: str,
     text_mode: str,
 ) -> str | None:
-    if text_mode != "overlay" or business_kind != "real_estate" or not audience:
+    if text_mode != "overlay" or not audience:
         return audience
-    cleaned = re.sub(r"\bsale\b", "transaction", audience, flags=re.IGNORECASE)
-    cleaned = re.sub(r"\bsell\b", "move", cleaned, flags=re.IGNORECASE)
+    cleaned = audience
+    for item in get_vertical_config(business_kind).get("audience_replacements", []):
+        if not isinstance(item, dict):
+            continue
+        pattern = str(item.get("pattern") or "")
+        replacement = str(item.get("replacement") or "")
+        if pattern:
+            cleaned = re.sub(pattern, replacement, cleaned, flags=re.IGNORECASE)
     return cleaned
 
 
 def _template_directions(business_kind: str) -> list[tuple[str, str, str]]:
-    if business_kind == "real_estate":
-        return [
-            (
-                "modern_kitchen",
-                "Modern Kitchen",
-                "A clean modern kitchen and dining area with soft ambient daylight, polished counters, subtle moving-day cues, and premium real-home texture. "
-                "No paperwork, screens, labels, or readable decor.",
-            ),
-            (
-                "keys_counter",
-                "Keys Counter",
-                "A close editorial scene of plain house keys on a stone countertop with cabinets and a clean interior wall softly visible behind them. "
-                "No branded keychains, documents, contracts, or readable marks.",
-            ),
-            (
-                "sunlit_living_room",
-                "Sunlit Living Room",
-                "A bright neutral living room with clean furniture, warm ambient light, soft plants, and subtle moving boxes without markings. "
-                "No windows, doors, paperwork, screens, labels, or readable decor.",
-            ),
-            (
-                "calm_hallway",
-                "Calm Hallway",
-                "A clean residential hallway with warm wood floors, soft daylight, and a few plain packed boxes near an interior doorway. "
-                "No front-door exterior, address numbers, documents, or readable marks.",
-            ),
-        ]
-    if business_kind == "hvac":
-        return [
-            (
-                "interior_vent_airflow",
-                "Interior Vent Airflow",
-                "A sunlit modern living room with a visible ceiling or wall air vent, linen curtains moving slightly in cool air. "
-                "Premium home comfort mood, real materials, layered depth, with an uncluttered bright wall area.",
-            ),
-            (
-                "outdoor_condenser",
-                "Outdoor Condenser",
-                "A clean AC condenser beside a modern home after service, fresh landscaping, open sky and warm neighborhood light. "
-                "Make the equipment feel reliable and aspirational, not catalog-like.",
-            ),
-            (
-                "register_closeup",
-                "Register Close-Up",
-                "Macro close-up of a clean metal air register with cool light, crisp reflections, and subtle atmospheric haze. "
-                "Editorial product-photography feel with an elegant uncluttered area.",
-            ),
-            (
-                "technician_arrival",
-                "Technician Arrival",
-                "A service technician arriving at a bright residential front entry with a compact unmarked tool bag, captured like a premium local-service ad. "
-                "No service vehicle, no readable branding, no wall signs; keep the scene friendly, trustworthy, and cinematic.",
-            ),
-        ]
-    # smoothie
-    return [
-        (
-            "mango_hero_pair",
-            "Hero Pair",
-            "Two tall mango smoothies with condensation on a vibrant shop counter, fresh mango, citrus, herbs, and sunlight. "
-            "Make it feel like a premium summer campaign, with a calm uncluttered visual area.",
-        ),
-        (
-            "mango_pour_splash",
-            "Pour Splash",
-            "Mango smoothie pouring into a cup with a dramatic splash arc, frozen droplets, fruit pieces, and glossy highlights. "
-            "Energetic, appetizing, more editorial than sterile.",
-        ),
-        (
-            "ingredient_flatlay",
-            "Ingredient Flatlay",
-            "Top-down editorial flatlay with mango, citrus, mint, ice, a smoothie cup, colorful napkins, and playful summer styling. "
-            "Organized with calm negative space, but rich and lively.",
-        ),
-        (
-            "tropical_counter_scene",
-            "Counter Scene",
-            "Bright smoothie-shop counter scene with one hero mango smoothie, tropical accents, sunlight, reflections, and believable cafe depth. "
-            "Make the scene inviting and local, not product-only.",
-        ),
-        (
-            "macro_mango_texture",
-            "Macro Texture",
-            "Macro close-up of mango smoothie swirl, fruit pulp texture, condensation, mint, and liquid highlights. "
-            "Abstract, tactile, premium, and appetizing.",
-        ),
-        (
-            "lifestyle_pickup",
-            "Lifestyle Pickup",
-            "A natural hand picking up a mango smoothie from a bright counter, summer light, fresh fruit nearby, shallow depth of field. "
-            "Keep it joyful, local, and campaign-ready with no readable labels.",
-        ),
-    ]
+    return vertical_items(business_kind, "template_directions")
 
 
 def _style_variants(business_kind: str) -> list[tuple[str, str, str]]:
-    if business_kind == "real_estate":
-        return [
-            ("warm_daylight", "Warm Daylight", "Warm natural daylight, clean shadows, welcoming residential mood."),
-            ("premium_editorial", "Premium Editorial", "Premium editorial lighting, real materials, bright but grounded composition."),
-            ("trust_clean", "Trust Clean", "Clean trustworthy service-ad feel, polished but not sterile."),
-        ]
-    if business_kind == "hvac":
-        return [
-            ("bright_daylight", "Bright Daylight", "Bright natural daylight, clean crisp shadows, modern home vibe."),
-            ("cool_blue", "Cool Blue", "Cool-toned lighting with soft blue highlights, fresh and refreshing feel."),
-            ("premium_clean", "Premium Clean", "Premium commercial lighting, subtle rim light, cinematic but clean and minimal."),
-        ]
-    return [
-        ("bright_studio", "Bright Studio", "High-key studio softbox lighting, crisp highlights, clean modern look."),
-        ("sunny_window", "Sunny Window", "Natural window light, bright morning feel, gentle shadows, fresh and airy."),
-        ("premium_gloss", "Premium Gloss", "Cinematic premium commercial lighting, subtle rim light, glossy highlights, shallow depth of field."),
-    ]
+    return vertical_items(business_kind, "style_variants")
 
 
 def build_template_prompts(
@@ -516,37 +391,10 @@ def build_llm_prompts(
             "%",
             "price",
             "phone number",
-            "wall lettering",
-            "truck decal",
-            "vehicle decal",
-            "service slogan",
         ]
+        hard_rejects.extend(vertical_strings(business_kind, "candidate_reject_terms"))
         if any(token in text for token in hard_rejects):
             return False
-        if business_kind == "real_estate":
-            real_estate_rejects = [
-                "door",
-                "front door",
-                "front entry",
-                "entryway",
-                "porch",
-                "exterior",
-                "neighborhood",
-                "window",
-                "glass",
-                "outside",
-                "street",
-                "sale",
-                "for sale",
-                "sold",
-                "yard",
-                "address",
-                "paperwork",
-                "contract",
-                "document",
-            ]
-            if any(token in text for token in real_estate_rejects):
-                return False
         if re.search(r"\d", text):
             return False
         return True
@@ -556,15 +404,10 @@ def build_llm_prompts(
         clean = "".join(ch for ch in value if ch in string.printable).strip()
         return " ".join(clean.split())
 
-    vertical_direction = (
-        "For smoothies, think like a premium food-and-beverage art director: dynamic pours, real cafe context, summer lifestyle, macro texture, fruit abundance, glass reflections, sunlight, color, and appetite appeal. "
-        if business_kind == "smoothie"
-        else (
-            "For HVAC, think like a premium local home-service art director: comfortable rooms, fresh airflow, trustworthy technician moments, equipment detail, seasonal relief, modern homes, and believable service context. "
-            if business_kind == "hvac"
-            else "For real estate, think like a premium local property-services art director: clean interiors, warm kitchens, living rooms, keys on counters, plain walls, and smooth transaction cues without doors, windows, exterior views, listing props, or documents. "
-        )
-    )
+    vertical_direction = str(get_vertical_config(business_kind).get("llm_art_direction") or "")
+    if vertical_direction:
+        vertical_direction = f"{vertical_direction} "
+    overlay_guardrails = " ".join(vertical_strings(business_kind, "overlay_guardrails"))
     prompt_parts = [
         "Generate bold, high-converting image prompt specs for a local business promotion. ",
         f"Return exactly {count} items as a JSON array. ",
@@ -592,16 +435,7 @@ def build_llm_prompts(
         ),
         f"Business vertical: {business_kind}. ",
         vertical_direction,
-        (
-            "For HVAC overlay prompts, use heating-and-cooling visual language instead of visible HVAC lettering; if a technician appears, describe plain unmarked workwear only. "
-            if text_mode == "overlay" and business_kind == "hvac"
-            else ""
-        ),
-        (
-            "For real-estate overlay prompts, use interior-only close home scenes; avoid doors, windows, porches, exteriors, address numbers, paperwork, contracts, and readable documents. "
-            if text_mode == "overlay" and business_kind == "real_estate"
-            else ""
-        ),
+        f"{overlay_guardrails} " if text_mode == "overlay" and overlay_guardrails else "",
         (
             f"Creative goal: make each {business_kind} {format_prefix} feel like a complete finished ad, not an empty template. "
             if text_mode == "in_image"
@@ -722,7 +556,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Generate ad-creative image prompts (prompt-only).")
     parser.add_argument("--engine", choices=["template", "llm"], default="template")
     parser.add_argument("--count", type=int, default=6, help="Number of prompts to generate.")
-    parser.add_argument("--business-kind", choices=["smoothie", "hvac"], default="smoothie")
+    parser.add_argument("--business-kind", choices=["smoothie", "hvac", "real_estate"], default="smoothie")
     parser.add_argument("--text-mode", choices=["overlay", "in_image"], default="in_image")
     parser.add_argument(
         "--format-hint",

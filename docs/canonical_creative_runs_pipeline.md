@@ -8,6 +8,7 @@ This repository now has one canonical generation flow:
    - normalize input
    - prompt generation for text-free campaign source images
    - image rendering (`comfyui_bg` default; `ollama | openai` remain optional providers)
+   - background QC + retry for full-ad runs
    - AI layout planning + exact typography rendering when `creative_mode=full_ad`
    - deterministic overlay rendering only when `creative_mode=background_overlay`
    - persistence + manifest
@@ -23,6 +24,8 @@ Contains:
 - `prompts/*.prompt.txt`
 - `prompts/*.negative.txt`
 - `generated_images/*.png`
+- `generated_images/attempts/*.png` for QC retry attempts
+- `qc/*.json` background QC reports
 - `layout_plans/*.json` for full-ad typography plans
 - `final/*.png`
 - `manifest.json`
@@ -54,4 +57,12 @@ HYPERLOCAL_IMAGE_PROVIDER=comfyui_bg
 COMFYUI_API_URL=http://100.111.132.114:8188
 COMFYUI_WORKFLOW_PATH=config/comfyui_workflows/z_image_turbo_background.json
 COMFYUI_OUTPUT_NODE=10
+HYPERLOCAL_QC_ENABLED=1
+HYPERLOCAL_MAX_IMAGE_ATTEMPTS=3
 ```
+
+## Vertical configuration
+
+Vertical-specific prompt directions, LLM guardrails, layout color defaults, and QC retry wording are configured in:
+
+`apps/api/config/verticals/defaults.json`

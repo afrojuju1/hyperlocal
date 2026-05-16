@@ -31,7 +31,7 @@ class RuntimeConfig:
     comfyui_output_node: str | None = os.getenv("COMFYUI_OUTPUT_NODE")
     output_dir: str = os.getenv("HYPERLOCAL_OUTPUT_DIR", "output")
     max_image_attempts: int = int(os.getenv("HYPERLOCAL_MAX_IMAGE_ATTEMPTS", "3"))
-    qc_enabled: bool = os.getenv("HYPERLOCAL_QC_ENABLED", "0") == "1"
+    qc_enabled: bool = os.getenv("HYPERLOCAL_QC_ENABLED", "1") == "1"
     variants: int = int(os.getenv("HYPERLOCAL_VARIANTS", "1"))
     persist_enabled: bool = os.getenv("HYPERLOCAL_PERSIST_ENABLED", "0") == "1"
     database_url: str | None = os.getenv("DATABASE_URL")

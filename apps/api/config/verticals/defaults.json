@@ -1,0 +1,273 @@
+{
+  "smoothie": {
+    "label": "smoothie",
+    "overlay_business_label": "smoothie",
+    "overlay_subject": "{product} as a realistic product or lifestyle scene",
+    "constraints": {
+      "in_image": [
+        "Premium food, beverage, or lifestyle advertising photography.",
+        "Clear cups, fresh fruit, shop atmosphere, motion, splashes, natural hands, or editorial props are allowed when they improve the concept.",
+        "Avoid readable product labels or brand marks."
+      ],
+      "overlay": [
+        "Premium food, beverage, or lifestyle advertising photography.",
+        "Clear cups, fresh fruit, shop atmosphere, motion, splashes, natural hands, or editorial props are allowed when they improve the concept.",
+        "Avoid readable product labels or brand marks."
+      ]
+    },
+    "negative_prompt_extra": {
+      "in_image": "",
+      "overlay": ""
+    },
+    "template_directions": [
+      {
+        "slug": "mango_hero_pair",
+        "title": "Hero Pair",
+        "prompt": "Two tall mango smoothies with condensation on a vibrant shop counter, fresh mango, citrus, herbs, and sunlight. Make it feel like a premium summer campaign, with a calm uncluttered visual area."
+      },
+      {
+        "slug": "mango_pour_splash",
+        "title": "Pour Splash",
+        "prompt": "Mango smoothie pouring into a cup with a dramatic splash arc, frozen droplets, fruit pieces, and glossy highlights. Energetic, appetizing, more editorial than sterile."
+      },
+      {
+        "slug": "ingredient_flatlay",
+        "title": "Ingredient Flatlay",
+        "prompt": "Top-down editorial flatlay with mango, citrus, mint, ice, a smoothie cup, colorful napkins, and playful summer styling. Organized with calm negative space, but rich and lively."
+      },
+      {
+        "slug": "tropical_counter_scene",
+        "title": "Counter Scene",
+        "prompt": "Bright smoothie-shop counter scene with one hero mango smoothie, tropical accents, sunlight, reflections, and believable cafe depth. Make the scene inviting and local, not product-only."
+      },
+      {
+        "slug": "macro_mango_texture",
+        "title": "Macro Texture",
+        "prompt": "Macro close-up of mango smoothie swirl, fruit pulp texture, condensation, mint, and liquid highlights. Abstract, tactile, premium, and appetizing."
+      },
+      {
+        "slug": "lifestyle_pickup",
+        "title": "Lifestyle Pickup",
+        "prompt": "A natural hand picking up a mango smoothie from a bright counter, summer light, fresh fruit nearby, shallow depth of field. Keep it joyful, local, and campaign-ready with no readable labels."
+      }
+    ],
+    "style_variants": [
+      {
+        "slug": "bright_studio",
+        "title": "Bright Studio",
+        "prompt": "High-key studio softbox lighting, crisp highlights, clean modern look."
+      },
+      {
+        "slug": "sunny_window",
+        "title": "Sunny Window",
+        "prompt": "Natural window light, bright morning feel, gentle shadows, fresh and airy."
+      },
+      {
+        "slug": "premium_gloss",
+        "title": "Premium Gloss",
+        "prompt": "Cinematic premium commercial lighting, subtle rim light, glossy highlights, shallow depth of field."
+      }
+    ],
+    "llm_art_direction": "For smoothies, think like a premium food-and-beverage art director: dynamic pours, real cafe context, summer lifestyle, macro texture, fruit abundance, glass reflections, sunlight, color, and appetite appeal.",
+    "overlay_guardrails": [],
+    "candidate_reject_terms": [],
+    "audience_replacements": [],
+    "layout": {},
+    "qc": {
+      "text_score_threshold": 34,
+      "calm_zone_score_threshold": 88,
+      "retry_prompt_append": "Retry correction: keep every surface plain and unmarked, avoid signage or label-like details, and preserve one calm low-detail area for later exact typography.",
+      "retry_negative_append": "No readable text, no labels, no logos, no signs, no menus, no package lettering, no coupon graphics, no tiny glyph marks, no busy typography-like patterns."
+    }
+  },
+  "hvac": {
+    "label": "home-service",
+    "overlay_business_label": "home-service",
+    "overlay_subject": "a clean residential home-service comfort scene with heating and cooling equipment, vents, tools, airflow, or a plain unmarked technician moment; avoid vehicles and text-like graphics",
+    "constraints": {
+      "in_image": [
+        "Premium home-service advertising photography.",
+        "Modern homes, heating and cooling equipment, vents, tools, plain unmarked technician workwear, families, seasonal comfort cues, or subtle airflow are allowed when natural and safe.",
+        "Avoid service vehicles, readable decals, uniform patches, brand marks, screens with text, or unsafe work scenes."
+      ],
+      "overlay": [
+        "Premium home-service advertising photography.",
+        "Modern homes, heating and cooling equipment, vents, tools, plain unmarked technician workwear, families, seasonal comfort cues, or subtle airflow are allowed when natural and safe.",
+        "Avoid service vehicles, readable decals, uniform patches, brand marks, screens with text, or unsafe work scenes."
+      ]
+    },
+    "negative_prompt_extra": {
+      "in_image": "Avoid unsafe work scenes, service vehicles, readable decals, uniform patches, and HVAC lettering.",
+      "overlay": "Avoid unsafe work scenes, service vehicles, readable decals, uniform patches, and HVAC lettering."
+    },
+    "template_directions": [
+      {
+        "slug": "interior_vent_airflow",
+        "title": "Interior Vent Airflow",
+        "prompt": "A sunlit modern living room with a visible ceiling or wall air vent, linen curtains moving slightly in cool air. Premium home comfort mood, real materials, layered depth, with an uncluttered bright wall area."
+      },
+      {
+        "slug": "outdoor_condenser",
+        "title": "Outdoor Condenser",
+        "prompt": "A clean AC condenser beside a modern home after service, fresh landscaping, open sky and warm neighborhood light. Make the equipment feel reliable and aspirational, not catalog-like."
+      },
+      {
+        "slug": "register_closeup",
+        "title": "Register Close-Up",
+        "prompt": "Macro close-up of a clean metal air register with cool light, crisp reflections, and subtle atmospheric haze. Editorial product-photography feel with an elegant uncluttered area."
+      },
+      {
+        "slug": "technician_arrival",
+        "title": "Technician Arrival",
+        "prompt": "A service technician arriving at a bright residential front entry with a compact unmarked tool bag, captured like a premium local-service ad. No service vehicle, no readable branding, no wall signs; keep the scene friendly, trustworthy, and cinematic."
+      }
+    ],
+    "style_variants": [
+      {
+        "slug": "bright_daylight",
+        "title": "Bright Daylight",
+        "prompt": "Bright natural daylight, clean crisp shadows, modern home vibe."
+      },
+      {
+        "slug": "cool_blue",
+        "title": "Cool Blue",
+        "prompt": "Cool-toned lighting with soft blue highlights, fresh and refreshing feel."
+      },
+      {
+        "slug": "premium_clean",
+        "title": "Premium Clean",
+        "prompt": "Premium commercial lighting, subtle rim light, cinematic but clean and minimal."
+      }
+    ],
+    "llm_art_direction": "For HVAC, think like a premium local home-service art director: comfortable rooms, fresh airflow, trustworthy technician moments, equipment detail, seasonal relief, modern homes, and believable service context.",
+    "overlay_guardrails": [
+      "For HVAC overlay prompts, use heating-and-cooling visual language instead of visible HVAC lettering; if a technician appears, describe plain unmarked workwear only."
+    ],
+    "candidate_reject_terms": [
+      "premium hvac service",
+      "service in action",
+      "wall lettering",
+      "truck decal",
+      "vehicle decal",
+      "service slogan"
+    ],
+    "audience_replacements": [],
+    "layout": {
+      "headline_color": "#0B3A82",
+      "offer_color": "#B91C1C",
+      "stroke_color": "#FFFFFF"
+    },
+    "qc": {
+      "text_score_threshold": 34,
+      "calm_zone_score_threshold": 88,
+      "retry_prompt_append": "Retry correction: use a clean home comfort scene with plain unmarked equipment, no service vehicle, no uniform patch, no wall lettering, and one calm low-detail area for later exact typography.",
+      "retry_negative_append": "No readable text, no HVAC lettering, no vehicle decals, no uniform patches, no phone-number-like marks, no currency marks, no service slogans, no labels, no signs, no wall lettering."
+    }
+  },
+  "real_estate": {
+    "label": "real-estate service",
+    "overlay_business_label": "real-estate service",
+    "overlay_subject": "a tight polished residential interior composition with kitchen counters, keys, cabinets, plain walls, or plain moving boxes; keep the view fully inside the home",
+    "constraints": {
+      "in_image": [
+        "Premium real-estate and home-services advertising photography.",
+        "Modern homes, bright interiors, kitchens, living rooms, hallways, keys, plain moving boxes, or moving-day details are allowed when natural.",
+        "Avoid address numbers, paperwork text, logos, brand marks, or readable documents."
+      ],
+      "overlay": [
+        "Premium real-estate and home-services advertising photography.",
+        "Modern homes, bright interiors, kitchens, living rooms, hallways, keys, plain moving boxes, or moving-day details are allowed when natural.",
+        "Avoid address numbers, paperwork text, logos, brand marks, or readable documents."
+      ]
+    },
+    "negative_prompt_extra": {
+      "in_image": "Avoid real estate yard signs, window signs, door signs, sale lettering, sold lettering, address numbers, paperwork text, and readable documents.",
+      "overlay": "Avoid real estate yard signs, window signs, door signs, sale lettering, sold lettering, address numbers, paperwork text, and readable documents."
+    },
+    "template_directions": [
+      {
+        "slug": "modern_kitchen",
+        "title": "Modern Kitchen",
+        "prompt": "A clean modern kitchen and dining area with soft ambient daylight, polished counters, subtle moving-day cues, and premium real-home texture. No paperwork, screens, labels, or readable decor."
+      },
+      {
+        "slug": "keys_counter",
+        "title": "Keys Counter",
+        "prompt": "A close editorial scene of plain house keys on a stone countertop with cabinets and a clean interior wall softly visible behind them. No branded keychains, documents, contracts, or readable marks."
+      },
+      {
+        "slug": "sunlit_living_room",
+        "title": "Sunlit Living Room",
+        "prompt": "A bright neutral living room with clean furniture, warm ambient light, soft plants, and subtle moving boxes without markings. No windows, doors, paperwork, screens, labels, or readable decor."
+      },
+      {
+        "slug": "calm_hallway",
+        "title": "Calm Hallway",
+        "prompt": "A clean residential hallway with warm wood floors, soft daylight, and a few plain packed boxes near an interior doorway. No front-door exterior, address numbers, documents, or readable marks."
+      }
+    ],
+    "style_variants": [
+      {
+        "slug": "warm_daylight",
+        "title": "Warm Daylight",
+        "prompt": "Warm natural daylight, clean shadows, welcoming residential mood."
+      },
+      {
+        "slug": "premium_editorial",
+        "title": "Premium Editorial",
+        "prompt": "Premium editorial lighting, real materials, bright but grounded composition."
+      },
+      {
+        "slug": "trust_clean",
+        "title": "Trust Clean",
+        "prompt": "Clean trustworthy service-ad feel, polished but not sterile."
+      }
+    ],
+    "llm_art_direction": "For real estate, think like a premium local property-services art director: clean interiors, warm kitchens, living rooms, keys on counters, plain walls, and smooth transaction cues without doors, windows, exterior views, listing props, or documents.",
+    "overlay_guardrails": [
+      "For real-estate overlay prompts, use interior-only close home scenes; avoid doors, windows, porches, exteriors, address numbers, paperwork, contracts, and readable documents."
+    ],
+    "candidate_reject_terms": [
+      "door",
+      "front door",
+      "front entry",
+      "entryway",
+      "porch",
+      "exterior",
+      "neighborhood",
+      "window",
+      "glass",
+      "outside",
+      "street",
+      "sale",
+      "for sale",
+      "sold",
+      "yard",
+      "address",
+      "paperwork",
+      "contract",
+      "document"
+    ],
+    "audience_replacements": [
+      {
+        "pattern": "\\bsale\\b",
+        "replacement": "transaction"
+      },
+      {
+        "pattern": "\\bsell\\b",
+        "replacement": "move"
+      }
+    ],
+    "layout": {
+      "headline_color": "#102A43",
+      "offer_color": "#B7791F",
+      "stroke_color": "#FFFFFF"
+    },
+    "qc": {
+      "text_score_threshold": 34,
+      "calm_zone_score_threshold": 88,
+      "retry_prompt_append": "Retry correction: stay fully inside a residential interior, use plain walls and unmarked objects, avoid windows, exterior views, listing signs, address numbers, paperwork, and create one calm low-detail area for later exact typography.",
+      "retry_negative_append": "No readable text, no for-sale signs, no sold signs, no listing signs, no address numbers, no paperwork, no contracts, no documents, no window signs, no door signs, no exterior view, no label-like marks."
+    }
+  }
+}

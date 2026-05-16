@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from hyperlocal.creative.contracts import CreativeCopyInput, CreativeRunRequest
 from hyperlocal.creative.image_generation import GeneratedCreative
+from hyperlocal.creative.vertical_config import vertical_layout_defaults
 from hyperlocal.integrations.llm import build_llm_clients
 from hyperlocal.integrations.openai import chat_json
 
@@ -139,23 +140,23 @@ class LayoutRenderingService:
         request: CreativeRunRequest,
         plan: CreativeLayoutPlan,
     ) -> CreativeLayoutPlan:
-        if request.campaign.business_kind not in {"hvac", "real_estate"}:
+        defaults = vertical_layout_defaults(request.campaign.business_kind)
+        if not defaults:
             return plan
+
+        headline_color = defaults.get("headline_color", "auto")
+        offer_color = defaults.get("offer_color", headline_color)
+        stroke_color = defaults.get("stroke_color", "auto")
 
         elements: list[LayoutTextElement] = []
         for element in plan.elements:
             if element.color != "auto":
                 elements.append(element)
                 continue
-            if request.campaign.business_kind == "hvac":
-                if element.role == "offer":
-                    elements.append(replace(element, color="#B91C1C", stroke_color="#FFFFFF"))
-                else:
-                    elements.append(replace(element, color="#0B3A82", stroke_color="#FFFFFF"))
-            elif element.role == "offer":
-                elements.append(replace(element, color="#B7791F", stroke_color="#FFFFFF"))
+            if element.role == "offer":
+                elements.append(replace(element, color=offer_color, stroke_color=stroke_color))
             else:
-                elements.append(replace(element, color="#102A43", stroke_color="#FFFFFF"))
+                elements.append(replace(element, color=headline_color, stroke_color=stroke_color))
         return CreativeLayoutPlan(name=plan.name, elements=elements, notes=plan.notes)
 
     def _plan_layout(

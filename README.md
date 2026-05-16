@@ -3,6 +3,7 @@
 Hyperlocal is a canonical async creative-generation pipeline that combines:
 - Remote NucBox Ollama (OpenAI-compatible) for text generation
 - Remote NucBox ComfyUI/Z-Image Turbo text-free campaign image generation (`comfyui_bg` default)
+- Background QC + retry before final typography rendering
 - AI-directed exact typography rendering for full-ad outputs
 - Optional deterministic text overlay with brand kits for legacy/background-overlay mode
 - Postgres-backed run queue + worker
@@ -90,3 +91,20 @@ COMFYUI_OUTPUT_NODE=10
 ```
 
 The NucBox ComfyUI service is `comfyui-rocm.service`.
+
+## Background QC
+
+Full-ad runs generate text-free source images first, then run a deterministic QC pass before typography rendering. QC looks for obvious generated background text/signage and for whether the image has at least one calm area where exact typography can land.
+
+```bash
+HYPERLOCAL_QC_ENABLED=1
+HYPERLOCAL_MAX_IMAGE_ATTEMPTS=3
+```
+
+Rejected attempts are kept under `apps/api/output/creative_runs/<run_id>/generated_images/attempts/`, with JSON reports under `apps/api/output/creative_runs/<run_id>/qc/`. If all attempts fail QC, the pipeline uses the least-bad attempt and records that in the manifest instead of dropping the run.
+
+## Vertical Config
+
+Business-type prompt guidance, template concepts, LLM guardrails, layout color defaults, and QC retry wording live in:
+
+`apps/api/config/verticals/defaults.json`

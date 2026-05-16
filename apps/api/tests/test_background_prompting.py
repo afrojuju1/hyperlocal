@@ -10,6 +10,7 @@ from hyperlocal.creative.contracts import (
     CreativeRunRequest,
 )
 from hyperlocal.creative.image_generation import ImageGenerationService
+from hyperlocal.creative.vertical_config import get_vertical_config
 
 
 class BackgroundPromptingTests(unittest.TestCase):
@@ -122,6 +123,35 @@ class BackgroundPromptingTests(unittest.TestCase):
         self.assertEqual(meta["text_mode"], "overlay")
         self.assertEqual(meta["requested_text_mode"], "overlay")
         self.assertEqual(meta["final_typography"], "ai_layout")
+        self.assertIn(meta["qc_enabled"], {0, 1})
+        self.assertGreaterEqual(meta["max_image_attempts"], 1)
+
+    def test_vertical_prompt_guidance_is_loaded_from_config(self) -> None:
+        config = get_vertical_config("hvac")
+        self.assertEqual(config["layout"]["offer_color"], "#B91C1C")
+
+        service = ImageGenerationService()
+        request = CreativeRunRequest(
+            business=CreativeBusinessInput(name="Northside Plumbing & HVAC"),
+            campaign=CreativeCampaignInput(
+                business_kind="hvac",
+                product="AC repair",
+                offer="$79 SERVICE CALL",
+                cta="CALL 24/7",
+            ),
+            generation=CreativeGenerationOptions(
+                count=1,
+                images_per_prompt=1,
+                prompt_engine="template",
+                image_provider="comfyui_bg",
+                creative_mode="full_ad",
+            ),
+        )
+
+        spec = service._build_prompt_specs(request)[0]
+
+        self.assertTrue(spec.slug.startswith("interior_vent_airflow"))
+        self.assertIn(config["overlay_subject"], spec.prompt)
 
     def test_full_ad_hvac_prompt_omits_service_copy_from_source_image(self) -> None:
         service = ImageGenerationService()
