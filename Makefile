@@ -3,7 +3,7 @@ SHELL := /bin/bash
 API_DIR := apps/api
 WEB_DIR := apps/web
 API_BASE_URL ?= http://localhost:18000
-DATABASE_URL ?= postgresql+psycopg://hyperlocal:hyperlocal@localhost:55432/hyperlocal
+DATABASE_URL ?= postgresql://hyperlocal:hyperlocal@localhost:55432/hyperlocal
 
 .DEFAULT_GOAL := help
 
@@ -17,10 +17,10 @@ setup: ## Install API and web dependencies
 	cd $(WEB_DIR) && bun install
 
 up: ## Start the Docker stack
-	docker compose up -d --build
+	docker compose up -d --build --remove-orphans
 
 down: ## Stop the Docker stack
-	docker compose down
+	docker compose down --remove-orphans
 
 logs: ## Follow Docker stack logs
 	docker compose logs -f

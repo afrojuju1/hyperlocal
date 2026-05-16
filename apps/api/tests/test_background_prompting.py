@@ -68,7 +68,7 @@ class BackgroundPromptingTests(unittest.TestCase):
         self.assertEqual(len(specs), 1)
         self.assertIn("plain and unmarked", specs[0].prompt)
 
-    def test_in_image_prompt_specs_ask_model_for_finished_ad(self) -> None:
+    def test_full_ad_prompt_specs_generate_text_free_source_image(self) -> None:
         service = ImageGenerationService()
         request = CreativeRunRequest(
             business=CreativeBusinessInput(name="Sunset Smoothie Co."),
@@ -90,14 +90,40 @@ class BackgroundPromptingTests(unittest.TestCase):
         specs = service._build_prompt_specs(request)
 
         self.assertEqual(len(specs), 1)
-        self.assertIn("finished vertical 6x9 ad creative", specs[0].prompt)
-        self.assertIn('"Sunset Smoothie Co."', specs[0].prompt)
-        self.assertIn('"BUY 1 GET 1 50% OFF"', specs[0].prompt)
+        self.assertIn("Portrait 6x9 vertical photographic background", specs[0].prompt)
+        self.assertIn("plain and unmarked", specs[0].prompt)
+        self.assertNotIn('Required visible text', specs[0].prompt)
+        self.assertNotIn('"Sunset Smoothie Co."', specs[0].prompt)
+        self.assertNotIn('"BUY 1 GET 1 50% OFF"', specs[0].prompt)
         self.assertNotIn("ORDER NOW", specs[0].prompt)
-        self.assertIn("No other readable words should appear.", specs[0].prompt)
-        self.assertIn("do not put text inside boxes", specs[0].prompt)
+        self.assertIn("Avoid readable text", specs[0].negative_prompt)
 
-    def test_in_image_prompt_specs_include_user_creative_direction(self) -> None:
+    def test_runtime_meta_records_effective_text_mode(self) -> None:
+        service = ImageGenerationService()
+        request = CreativeRunRequest(
+            business=CreativeBusinessInput(name="Sunset Smoothie Co."),
+            campaign=CreativeCampaignInput(
+                business_kind="smoothie",
+                product="Mango smoothie",
+                offer="BUY 1 GET 1 50% OFF",
+                cta="ORDER NOW",
+            ),
+            generation=CreativeGenerationOptions(
+                count=1,
+                images_per_prompt=1,
+                prompt_engine="template",
+                image_provider="comfyui_bg",
+                creative_mode="full_ad",
+            ),
+        )
+
+        meta = service.runtime_meta(request)
+
+        self.assertEqual(meta["text_mode"], "overlay")
+        self.assertEqual(meta["requested_text_mode"], "overlay")
+        self.assertEqual(meta["final_typography"], "ai_layout")
+
+    def test_full_ad_prompt_specs_include_user_creative_direction(self) -> None:
         service = ImageGenerationService()
         request = CreativeRunRequest(
             business=CreativeBusinessInput(name="Sunset Smoothie Co."),

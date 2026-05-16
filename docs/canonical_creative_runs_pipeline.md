@@ -6,8 +6,9 @@ This repository now has one canonical generation flow:
 2. Worker (`uv run scripts/run_creative_worker.py`) claims `QUEUED` runs.
 3. Pipeline stages:
    - normalize input
-   - prompt generation for complete in-image ad creatives
+   - prompt generation for text-free campaign source images
    - image rendering (`comfyui_bg` default; `ollama | openai` remain optional providers)
+   - AI layout planning + exact typography rendering when `creative_mode=full_ad`
    - deterministic overlay rendering only when `creative_mode=background_overlay`
    - persistence + manifest
 4. Poll `GET /api/v1/creative-runs/{run_id}` until `SUCCEEDED | FAILED | CANCELED`.
@@ -22,7 +23,8 @@ Contains:
 - `prompts/*.prompt.txt`
 - `prompts/*.negative.txt`
 - `generated_images/*.png`
-- `final/*.png` only for background-overlay mode
+- `layout_plans/*.json` for full-ad typography plans
+- `final/*.png`
 - `manifest.json`
 
 ## API endpoints

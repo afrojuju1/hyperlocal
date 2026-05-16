@@ -30,7 +30,7 @@ make up
 
 ## Ports (Docker)
 - Postgres: `55432`
-- Backend API: `18000`
+- API: `18000`
 - Frontend: `13000`
 
 ## Database (Option B)

@@ -126,6 +126,7 @@ class ImageGenerationService:
         return variants
 
     def _build_prompt_specs(self, request: CreativeRunRequest):
+        text_mode = self._effective_image_text_mode(request)
         params = dict(
             business_kind=request.campaign.business_kind,
             business_name=request.business.name,
@@ -138,7 +139,7 @@ class ImageGenerationService:
             constraints=request.campaign.constraints,
             brand_colors=request.campaign.brand_colors,
             style_keywords=request.campaign.style_keywords,
-            text_mode=request.generation.text_mode or "in_image",
+            text_mode=text_mode,
             format_hint=request.campaign.format_hint,
             count=request.generation.count,
         )
@@ -152,6 +153,11 @@ class ImageGenerationService:
         if not specs:
             raise RuntimeError("Prompt generation returned zero prompt specs")
         return specs
+
+    def _effective_image_text_mode(self, request: CreativeRunRequest) -> str:
+        if request.generation.creative_mode == "full_ad":
+            return "overlay"
+        return request.generation.text_mode or "overlay"
 
     def runtime_meta(self, request: CreativeRunRequest) -> dict[str, str | int]:
         model = request.generation.image_model
@@ -170,5 +176,7 @@ class ImageGenerationService:
             "text_model": MODEL_CONFIG.text_model,
             "prompt_engine": request.generation.prompt_engine,
             "creative_mode": request.generation.creative_mode,
-            "text_mode": request.generation.text_mode or "in_image",
+            "text_mode": self._effective_image_text_mode(request),
+            "requested_text_mode": request.generation.text_mode or "in_image",
+            "final_typography": "ai_layout" if request.generation.creative_mode == "full_ad" else "brand_kit_overlay",
         }

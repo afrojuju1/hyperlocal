@@ -7,13 +7,13 @@ This writes everything (prompts + negatives + images) as flat files into one run
 under `output/` for easy viewing.
 
 Examples:
-  Smoothie (3 prompts + 3 images):
+  Smoothie (3 text-free source prompts + 3 images):
     cd apps/api
-    uv run scripts/generate_ad_creatives.py --business-kind smoothie --count 3 --engine llm --format-hint flyer_poster --text-mode in_image --out-subdir smoothie_ad_creatives
+    uv run scripts/generate_ad_creatives.py --business-kind smoothie --count 3 --engine llm --format-hint flyer_poster --text-mode overlay --out-subdir smoothie_ad_creatives
 
-  HVAC (3 prompts + 3 images), using the default remote ComfyUI backend:
+  HVAC (3 text-free source prompts + 3 images), using the default remote ComfyUI backend:
     cd apps/api
-    uv run scripts/generate_ad_creatives.py --business-kind hvac --count 3 --engine llm --format-hint flyer_poster --text-mode in_image --out-subdir hvac_ad_creatives --image-provider comfyui_bg
+    uv run scripts/generate_ad_creatives.py --business-kind hvac --count 3 --engine llm --format-hint flyer_poster --text-mode overlay --out-subdir hvac_ad_creatives --image-provider comfyui_bg
 
 Notes:
   Canonical production flow is API + worker (`/api/v1/creative-runs` + `run_creative_worker.py`).

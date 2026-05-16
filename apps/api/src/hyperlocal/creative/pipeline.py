@@ -15,6 +15,7 @@ from hyperlocal.creative.contracts import (
 from hyperlocal.persistence.repository import PersistenceManager
 from hyperlocal.creative.copy_generation import CopyGenerationService
 from hyperlocal.creative.image_generation import ImageGenerationService
+from hyperlocal.creative.layout_rendering import LayoutRenderingService
 from hyperlocal.creative.overlay_rendering import OverlayRenderingService
 
 
@@ -25,6 +26,7 @@ class CreativeRunPipeline:
         self._persistence = persistence
         self._copy_generation = CopyGenerationService()
         self._image_generation = ImageGenerationService()
+        self._layout_rendering = LayoutRenderingService()
         self._overlay_rendering = OverlayRenderingService()
 
     def execute(self, run_id: int, request: CreativeRunRequest) -> CreativeRunResult:
@@ -64,17 +66,25 @@ class CreativeRunPipeline:
             )
 
         artifacts: list[CreativeArtifact] = []
+        layout_plans: list[dict] = []
         if normalized.generation.creative_mode == "full_ad":
-            self._persistence.update_run_progress(run_id, stage="persisting", progress_pct=85)
+            self._persistence.update_run_progress(run_id, stage="typography_render", progress_pct=75)
+            typography = self._layout_rendering.render(
+                request=normalized,
+                run_dir=run_dir,
+                source_images=generated_images,
+                copies=copy_blocks,
+            )
+            layout_plans = [rendered.layout_plan for rendered in typography]
             rendered_variants = [
                 CreativeArtifact(
-                    variant_index=generated.variant_index,
-                    prompt_slug=generated.prompt_slug,
-                    background_image_url=generated.image_path,
-                    final_image_url=generated.image_path,
-                    overlay_template="ai_full_ad",
+                    variant_index=rendered.variant_index,
+                    prompt_slug=rendered.prompt_slug,
+                    background_image_url=rendered.background_image_url,
+                    final_image_url=rendered.final_image_url,
+                    overlay_template=rendered.overlay_template,
                 )
-                for generated in generated_images
+                for rendered in typography
             ]
         else:
             self._persistence.update_run_progress(run_id, stage="overlay_render", progress_pct=75)
@@ -114,6 +124,7 @@ class CreativeRunPipeline:
             "runtime": self._image_generation.runtime_meta(normalized),
             "copy_blocks": [copy.model_dump() for copy in copy_blocks],
             "generated_images": [asdict(generated) for generated in generated_images],
+            "layout_plans": layout_plans,
             "artifacts": [artifact.model_dump() for artifact in artifacts],
         }
         manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")

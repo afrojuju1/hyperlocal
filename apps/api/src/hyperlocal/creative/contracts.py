@@ -15,6 +15,7 @@ RunStage = Literal[
     "prompt_generation",
     "image_render",
     "background_render",
+    "typography_render",
     "overlay_render",
     "persisting",
     "completed",
@@ -57,6 +58,8 @@ class CreativeGenerationOptions(BaseModel):
     # Backward-compatible request fields. Prefer creative_mode/image_provider/image_model.
     background_provider: Literal["ollama", "openai", "comfyui_bg"] | None = None
     background_model: str | None = None
+    # Backward-compatible input. API creative runs now render exact typography after
+    # text-free image generation, so normalized requests use overlay mode.
     text_mode: Literal["in_image", "overlay"] | None = None
 
     @model_validator(mode="after")
@@ -84,7 +87,7 @@ class CreativeGenerationOptions(BaseModel):
             and self.text_mode is not None
         ):
             self.creative_mode = "full_ad" if self.text_mode == "in_image" else "background_overlay"
-        self.text_mode = "in_image" if self.creative_mode == "full_ad" else "overlay"
+        self.text_mode = "overlay"
 
         return self
 

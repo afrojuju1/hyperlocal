@@ -8,11 +8,11 @@ Writes:
   output/prompts/<out-subdir>/<timestamp>/*.txt
 
 Examples:
-  Smoothie prompts (finished in-image ad):
+  Smoothie prompts (standalone in-image ad experiment):
     cd apps/api
     uv run scripts/generate_ad_prompts.py --business-kind smoothie --engine llm --count 5 --format-hint flyer_poster --text-mode in_image --out-subdir smoothie_prompts
 
-  HVAC prompts (finished in-image ad):
+  HVAC prompts (standalone in-image ad experiment):
     cd apps/api
     uv run scripts/generate_ad_prompts.py --business-kind hvac --engine llm --count 5 --format-hint flyer_poster --text-mode in_image --out-subdir hvac_prompts --offer "FREE AC TUNING FOR 30 DAYS"
 """

@@ -1,10 +1,10 @@
 # Deterministic Overlay + Brand Kits
 
-Use this when you want exact copy every time (no misspellings from in-image text rendering).
+Use this when you want the older brand-kit template renderer instead of the full-ad AI layout renderer.
 
 ## 1) Generate text-free backgrounds in overlay mode
 
-The default product path generates complete in-image ads. Use `creative_mode=background_overlay` or the one-off script below when you need deterministic copy placement.
+The default product path now generates a text-free source image, plans typography separately, and renders exact text into `final/*.png`. Use `creative_mode=background_overlay` or the one-off script below when you need the older deterministic brand-kit template placement.
 
 ```bash
 HYPERLOCAL_IMAGE_PROVIDER=comfyui_bg

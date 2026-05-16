@@ -2,7 +2,8 @@
 
 Hyperlocal is a canonical async creative-generation pipeline that combines:
 - Remote NucBox Ollama (OpenAI-compatible) for text generation
-- Remote NucBox ComfyUI/Z-Image Turbo full-ad image generation (`comfyui_bg` default)
+- Remote NucBox ComfyUI/Z-Image Turbo text-free campaign image generation (`comfyui_bg` default)
+- AI-directed exact typography rendering for full-ad outputs
 - Optional deterministic text overlay with brand kits for legacy/background-overlay mode
 - Postgres-backed run queue + worker
 - On-disk output storage under `output/`
@@ -34,7 +35,7 @@ make web
 
 ## Ports (Docker)
 - Postgres: `55432`
-- Backend API: `18000`
+- API: `18000`
 - Frontend: `13000`
 
 ## Monorepo Layout
@@ -46,7 +47,7 @@ make web
 
 ## Canonical MVP Flow
 1. `POST /api/v1/creative-runs` to enqueue a run.
-2. Worker claims `QUEUED` runs and executes generation.
+2. Worker claims `QUEUED` runs and executes image generation plus final typography rendering.
 3. Poll `GET /api/v1/creative-runs/{run_id}` until terminal status.
 4. Read generated files via `/files/*`.
 

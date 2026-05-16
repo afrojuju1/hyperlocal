@@ -1,9 +1,9 @@
 services:
-  backend:
+  api:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    container_name: hyperlocal-backend
+    container_name: hyperlocal-api
     environment:
       DATABASE_URL: postgresql+psycopg://hyperlocal:hyperlocal@db:5432/hyperlocal
       HYPERLOCAL_PERSIST_ENABLED: "1"
@@ -61,7 +61,7 @@ services:
     ports:
       - "13000:3000"
     depends_on:
-      - backend
+      - api
 
   db:
     image: postgres:16
