@@ -2,8 +2,8 @@
 
 Hyperlocal is a canonical async creative-generation pipeline that combines:
 - Remote NucBox Ollama (OpenAI-compatible) for text generation
-- Remote NucBox ComfyUI/Z-Image Turbo background generation (`comfyui_bg` default)
-- Deterministic text overlay with brand kits
+- Remote NucBox ComfyUI/Z-Image Turbo full-ad image generation (`comfyui_bg` default)
+- Optional deterministic text overlay with brand kits for legacy/background-overlay mode
 - Postgres-backed run queue + worker
 - On-disk output storage under `output/`
 
@@ -74,14 +74,14 @@ Health check:
 curl http://100.111.132.114:11434/v1/models
 ```
 
-## NucBox ComfyUI Background Generation
+## NucBox ComfyUI Image Generation
 
 Image generation runs on the NucBox over Tailscale.
 
 ```bash
 HYPERLOCAL_IMAGE_PROVIDER=comfyui_bg
 COMFYUI_API_URL=http://100.111.132.114:8188
-COMFYUI_WORKFLOW_PATH=comfyui/workflows/z_image_turbo_background.json
+COMFYUI_WORKFLOW_PATH=config/comfyui_workflows/z_image_turbo_background.json
 COMFYUI_OUTPUT_NODE=10
 ```
 

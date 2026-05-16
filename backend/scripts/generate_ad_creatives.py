@@ -41,7 +41,7 @@ from hyperlocal.image_providers import (
 )
 from hyperlocal.openai_helpers import build_client, generate_image
 
-from scripts.generate_ad_prompts import build_llm_prompts, build_template_prompts
+from hyperlocal.ad_prompting import build_llm_prompts, build_template_prompts
 
 
 def timestamp() -> str:

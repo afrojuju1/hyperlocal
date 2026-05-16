@@ -25,7 +25,7 @@ class RuntimeConfig:
     ollama_image_timeout: float = float(os.getenv("OLLAMA_IMAGE_TIMEOUT", "600"))
     comfyui_api_url: str = os.getenv("COMFYUI_API_URL", "http://100.111.132.114:8188")
     comfyui_workflow_path: str = os.getenv(
-        "COMFYUI_WORKFLOW_PATH", "comfyui/workflows/z_image_turbo_background.json"
+        "COMFYUI_WORKFLOW_PATH", "config/comfyui_workflows/z_image_turbo_background.json"
     )
     comfyui_timeout: float = float(os.getenv("COMFYUI_TIMEOUT", "600"))
     comfyui_output_node: str | None = os.getenv("COMFYUI_OUTPUT_NODE")

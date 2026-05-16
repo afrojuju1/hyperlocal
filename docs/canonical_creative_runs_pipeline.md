@@ -6,10 +6,9 @@ This repository now has one canonical generation flow:
 2. Worker (`uv run scripts/run_creative_worker.py`) claims `QUEUED` runs.
 3. Pipeline stages:
    - normalize input
-   - copy generation (`auto` or provided)
-   - prompt generation for text-free backgrounds
-   - background rendering (`comfyui_bg` default; `ollama | openai` remain optional providers)
-   - deterministic overlay rendering (brand kit templates)
+   - prompt generation for complete in-image ad creatives
+   - image rendering (`comfyui_bg` default; `ollama | openai` remain optional providers)
+   - deterministic overlay rendering only when `creative_mode=background_overlay`
    - persistence + manifest
 4. Poll `GET /api/v1/creative-runs/{run_id}` until `SUCCEEDED | FAILED | CANCELED`.
 
@@ -22,8 +21,8 @@ Each run writes to:
 Contains:
 - `prompts/*.prompt.txt`
 - `prompts/*.negative.txt`
-- `backgrounds/*.png`
-- `final/*.png`
+- `generated_images/*.png`
+- `final/*.png` only for background-overlay mode
 - `manifest.json`
 
 ## API endpoints
@@ -51,6 +50,6 @@ OLLAMA_API_KEY=ollama
 HYPERLOCAL_TEXT_MODEL=qwen3:8b
 HYPERLOCAL_IMAGE_PROVIDER=comfyui_bg
 COMFYUI_API_URL=http://100.111.132.114:8188
-COMFYUI_WORKFLOW_PATH=comfyui/workflows/z_image_turbo_background.json
+COMFYUI_WORKFLOW_PATH=config/comfyui_workflows/z_image_turbo_background.json
 COMFYUI_OUTPUT_NODE=10
 ```

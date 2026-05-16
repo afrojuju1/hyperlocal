@@ -13,8 +13,9 @@ node_modules/
 .next/
 out/
 web/.env*
-sdxl/*
-comfyui/ComfyUI/
-!comfyui/ComfyUI/custom_nodes/
-!comfyui/ComfyUI/custom_nodes/hyperlocal_layout/
-!comfyui/ComfyUI/custom_nodes/hyperlocal_layout/**
+
+# Legacy local inference checkouts/caches. Default inference runs on the NucBox.
+sdxl/
+mlx/
+comfyui/
+backend/comfyui/

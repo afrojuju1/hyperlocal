@@ -76,7 +76,11 @@ def _resolve_workflow_path(path: str) -> Path:
     workflow_path = Path(path)
     if workflow_path.exists():
         return workflow_path
-    repo_root = Path(__file__).resolve().parents[2]
+    backend_root = Path(__file__).resolve().parents[1]
+    backend_candidate = backend_root / workflow_path
+    if backend_candidate.exists():
+        return backend_candidate
+    repo_root = backend_root.parent
     repo_candidate = repo_root / workflow_path
     if repo_candidate.exists():
         return repo_candidate

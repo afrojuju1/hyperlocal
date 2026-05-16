@@ -13,7 +13,7 @@
 Acre is a distributed asynchronous platform designed to bridge cloud-based geospatial logic with localized physical fulfillment. The system is split into two primary environments connected via a secure **Tailscale/Cloudflare Tunnel**.
 
 * **Cloud Layer (Hetzner):** Manages the web UI, PostGIS database, and the `arq` global task queue.
-* **Intelligence Layer (NucBox):** Handles local text generation via **Ollama** and background generation via **ComfyUI/Z-Image Turbo**.
+* **Intelligence Layer (NucBox):** Handles local text generation via **Ollama** and image generation via **ComfyUI/Z-Image Turbo**.
 * **Fulfillment Layer (Print Node):** Local hardware agent polling for `READY_TO_PRINT` jobs.
 
 ---
@@ -23,7 +23,7 @@ Acre is a distributed asynchronous platform designed to bridge cloud-based geosp
 * **Backend:** Python 3.12+ / FastAPI.
 * **Task Orchestration:** `arq` (Redis-backed, native `asyncio`).
 * **Geospatial DB:** PostgreSQL 16 + **PostGIS 3.4**.
-* **Intelligence:** Ollama text generation + ComfyUI/Z-Image Turbo background generation on the NucBox.
+* **Intelligence:** Ollama text generation + ComfyUI/Z-Image Turbo image generation on the NucBox.
 * **PDF Engine:** `Typst` (Rust-based) for millisecond PDF compilation.
 
 ---
@@ -43,7 +43,7 @@ Triggered by an `arq` worker when a user requests "Generate Design."
 
 1. **Context Scraper:** Pulls brand colors/logos from the user's URL.
 2. **Ollama Inference:** NucBox Ollama generates high-conversion ad copy.
-3. **Image Synthesis:** NucBox ComfyUI/Z-Image Turbo produces text-free background assets.
+3. **Image Synthesis:** NucBox ComfyUI/Z-Image Turbo produces complete in-image ad creatives by default.
 4. **Local Compute:** The canonical path avoids hosted image or LLM APIs for routine flyer generation.
 
 ### C. The Fulfillment Node (Local Agent)

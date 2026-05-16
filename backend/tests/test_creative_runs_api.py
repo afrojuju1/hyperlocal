@@ -58,7 +58,7 @@ class FakeManager:
                 variant_index=1,
                 final_image_url="output/creative_runs/1/final/001.png",
                 overlay_template="classic_center",
-                background_image_url="output/creative_runs/1/backgrounds/001.png",
+                background_image_url="output/creative_runs/1/generated_images/001.png",
             )
         ]
 

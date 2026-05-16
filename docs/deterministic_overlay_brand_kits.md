@@ -2,14 +2,14 @@
 
 Use this when you want exact copy every time (no misspellings from in-image text rendering).
 
-## 1) Generate text-free backgrounds
+## 1) Generate text-free backgrounds in overlay mode
 
-The canonical path is the creative-runs worker with remote NucBox ComfyUI:
+The default product path generates complete in-image ads. Use `creative_mode=background_overlay` or the one-off script below when you need deterministic copy placement.
 
 ```bash
 HYPERLOCAL_IMAGE_PROVIDER=comfyui_bg
 COMFYUI_API_URL=http://100.111.132.114:8188
-COMFYUI_WORKFLOW_PATH=comfyui/workflows/z_image_turbo_background.json
+COMFYUI_WORKFLOW_PATH=config/comfyui_workflows/z_image_turbo_background.json
 COMFYUI_OUTPUT_NODE=10
 uv run scripts/run_creative_worker.py
 ```

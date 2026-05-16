@@ -3,7 +3,7 @@
 ## Project Summary
 Hyperlocal is a flyer-generation pipeline that uses:
 - Remote NucBox Ollama (OpenAI-compatible) for text generation
-- Remote NucBox ComfyUI/Z-Image Turbo for background image generation (default)
+- Remote NucBox ComfyUI/Z-Image Turbo for full-ad image generation (default)
 - Postgres for persistence
 - On-disk output storage under `output/`
 
@@ -43,6 +43,7 @@ psql "$DATABASE_URL" -f backend/sql/schema.sql
 
 ## Run Flyer Generation
 ```bash
+cd backend
 uv run scripts/run_creative_worker.py
 ```
 
@@ -52,7 +53,7 @@ Use `.env` (see `backend/.env.example`) and set at minimum:
 - `OLLAMA_BASE_URL` (NucBox default: `http://100.111.132.114:11434/v1`)
 - `HYPERLOCAL_TEXT_MODEL` (default: `qwen3:8b`)
 - `COMFYUI_API_URL` (NucBox default: `http://100.111.132.114:8188`)
-- `COMFYUI_WORKFLOW_PATH` (default: `comfyui/workflows/z_image_turbo_background.json`)
+- `COMFYUI_WORKFLOW_PATH` (default: `config/comfyui_workflows/z_image_turbo_background.json`)
 
 ## Text Generation
 - Default provider is remote NucBox Ollama via `HYPERLOCAL_LLM_PROVIDER=ollama`.
@@ -74,19 +75,17 @@ Use `.env` (see `backend/.env.example`) and set at minimum:
 
 **MANDATORY WORKFLOW:**
 
-1. **File issues for remaining work** - Create issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
+1. **Run quality gates** (if code changed) - Tests, linters, builds
+2. **Commit intentionally** - Include all intended changes and no generated output
+3. **PUSH TO REMOTE** - This is MANDATORY when the user asks to land the work:
    ```bash
    git pull --rebase
-   bd sync
    git push
    git status  # MUST show "up to date with origin"
    ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
+4. **Clean up** - Clear stashes, prune remote branches if relevant
+5. **Verify** - All intended changes committed AND pushed
+6. **Hand off** - Provide context for next session
 
 **CRITICAL RULES:**
 - Work is NOT complete until `git push` succeeds

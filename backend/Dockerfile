@@ -14,7 +14,6 @@ RUN curl -fsSL https://install.typst.community/install.sh | sh
 COPY backend/pyproject.toml backend/uv.lock /app/
 RUN uv sync --frozen --no-dev --python "$UV_PYTHON"
 
-COPY comfyui/workflows /app/comfyui/workflows
 COPY backend /app
 
 EXPOSE 8000

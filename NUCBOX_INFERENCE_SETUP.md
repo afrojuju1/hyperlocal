@@ -3,8 +3,8 @@
 Hyperlocal uses the NucBox for the default inference path:
 
 - Text and prompt generation: NucBox Ollama OpenAI-compatible API.
-- Background image generation: NucBox ComfyUI/Z-Image Turbo over Tailscale.
-- Deterministic overlay rendering: backend worker after the background is generated.
+- Full-ad image generation: NucBox ComfyUI/Z-Image Turbo over Tailscale.
+- Deterministic overlay rendering: optional backend fallback for background-overlay mode.
 
 ## Text LLM
 
@@ -29,14 +29,14 @@ Expected service on the NucBox:
 ssh ade-nucbox-k8-plus 'systemctl --user status ollama.service'
 ```
 
-## Background Images
+## Images
 
 Use the NucBox ComfyUI ROCm service:
 
 ```bash
 HYPERLOCAL_IMAGE_PROVIDER=comfyui_bg
 COMFYUI_API_URL=http://100.111.132.114:8188
-COMFYUI_WORKFLOW_PATH=comfyui/workflows/z_image_turbo_background.json
+COMFYUI_WORKFLOW_PATH=config/comfyui_workflows/z_image_turbo_background.json
 COMFYUI_OUTPUT_NODE=10
 ```
 
