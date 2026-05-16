@@ -60,23 +60,28 @@ class CreativeRunPipeline:
                 background_image_url=bg.background_path,
             )
 
-        self._persistence.update_run_progress(run_id, stage="overlay_render", progress_pct=75)
-        overlays = self._overlay_rendering.render(
-            request=normalized,
-            run_dir=run_dir,
-            backgrounds=backgrounds,
-            copies=copy_blocks,
-        )
-
         artifacts: list[CreativeArtifact] = []
-        for rendered in overlays:
-            self._persistence.update_variant_render(
-                run_id=run_id,
-                variant_index=rendered.variant_index,
-                final_image_url=rendered.final_image_url,
-                overlay_template=rendered.overlay_template,
+        if normalized.generation.text_mode == "in_image":
+            self._persistence.update_run_progress(run_id, stage="persisting", progress_pct=85)
+            rendered_variants = [
+                CreativeArtifact(
+                    variant_index=bg.variant_index,
+                    prompt_slug=bg.prompt_slug,
+                    background_image_url=bg.background_path,
+                    final_image_url=bg.background_path,
+                    overlay_template="ai_full_ad",
+                )
+                for bg in backgrounds
+            ]
+        else:
+            self._persistence.update_run_progress(run_id, stage="overlay_render", progress_pct=75)
+            overlays = self._overlay_rendering.render(
+                request=normalized,
+                run_dir=run_dir,
+                backgrounds=backgrounds,
+                copies=copy_blocks,
             )
-            artifacts.append(
+            rendered_variants = [
                 CreativeArtifact(
                     variant_index=rendered.variant_index,
                     prompt_slug=rendered.prompt_slug,
@@ -84,7 +89,17 @@ class CreativeRunPipeline:
                     final_image_url=rendered.final_image_url,
                     overlay_template=rendered.overlay_template,
                 )
+                for rendered in overlays
+            ]
+
+        for artifact in rendered_variants:
+            self._persistence.update_variant_render(
+                run_id=run_id,
+                variant_index=artifact.variant_index,
+                final_image_url=artifact.final_image_url,
+                overlay_template=artifact.overlay_template,
             )
+            artifacts.append(artifact)
 
         self._persistence.update_run_progress(run_id, stage="persisting", progress_pct=92)
 

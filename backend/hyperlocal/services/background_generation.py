@@ -131,7 +131,8 @@ class BackgroundGenerationService:
             business_name=request.business.name,
             offer=request.campaign.offer,
             product=request.campaign.product,
-            text_mode="overlay",
+            cta=request.campaign.cta,
+            text_mode=request.generation.text_mode,
             format_hint=request.campaign.format_hint,
             count=request.generation.count,
         )
@@ -160,4 +161,5 @@ class BackgroundGenerationService:
             "background_model": model,
             "text_model": MODEL_CONFIG.text_model,
             "prompt_engine": request.generation.prompt_engine,
+            "text_mode": request.generation.text_mode,
         }

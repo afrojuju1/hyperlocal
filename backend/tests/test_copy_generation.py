@@ -66,6 +66,39 @@ class CopyGenerationTests(unittest.TestCase):
         self.assertLessEqual(len(normalized.offer.split()), 9)
         self.assertLessEqual(len(normalized.cta.split()), 4)
 
+    def test_normalize_keeps_offer_mechanics_out_of_other_fields(self) -> None:
+        service = object.__new__(CopyGenerationService)
+        request = make_request(copy_mode="auto")
+        raw = CreativeCopyInput(
+            headline="Sweet Deals, Sunny Flavors!",
+            subhead="Fresh mango with big savings",
+            offer="something else",
+            cta="ORDER NOW",
+            footer="50% off today only",
+        )
+
+        normalized = service._normalize(raw, request)
+
+        self.assertEqual(normalized.headline, "Mango smoothie made fresh")
+        self.assertEqual(normalized.subhead, "Fresh flavor, ready today")
+        self.assertEqual(normalized.offer, "BUY 1 GET 1 50% OFF")
+        self.assertEqual(normalized.footer, "Sunset Smoothie Co.")
+
+    def test_normalize_keeps_clean_headline_prefix_before_offer_language(self) -> None:
+        service = object.__new__(CopyGenerationService)
+        request = make_request(copy_mode="auto")
+        raw = CreativeCopyInput(
+            headline="Mango Smoothie: Buy 1 Get 1 50%",
+            subhead="Fresh mango, summer-style",
+            offer="something else",
+            cta="ORDER NOW",
+            footer="Sunset Smoothie Co.",
+        )
+
+        normalized = service._normalize(raw, request)
+
+        self.assertEqual(normalized.headline, "Mango Smoothie")
+
 
 if __name__ == "__main__":
     unittest.main()

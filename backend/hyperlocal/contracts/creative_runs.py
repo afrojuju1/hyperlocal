@@ -52,6 +52,7 @@ class CreativeGenerationOptions(BaseModel):
     prompt_engine: Literal["llm", "template"] = "llm"
     background_provider: Literal["ollama", "openai", "comfyui_bg"] = "comfyui_bg"
     background_model: str | None = None
+    text_mode: Literal["in_image", "overlay"] = "in_image"
 
 
 class CreativeOverlayOptions(BaseModel):

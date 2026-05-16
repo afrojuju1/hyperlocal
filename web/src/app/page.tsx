@@ -212,6 +212,7 @@ export default function Home() {
           images_per_prompt: 2,
           prompt_engine: "llm",
           background_provider: "comfyui_bg",
+          text_mode: "in_image",
         },
         overlay: {
           brand_kit:

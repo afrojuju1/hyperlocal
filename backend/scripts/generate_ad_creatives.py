@@ -9,11 +9,11 @@ under `output/` for easy viewing.
 Examples:
   Smoothie (3 prompts + 3 images):
     cd backend
-    uv run scripts/generate_ad_creatives.py --business-kind smoothie --count 3 --engine llm --format-hint flyer_poster --text-mode overlay --out-subdir smoothie_ad_creatives
+    uv run scripts/generate_ad_creatives.py --business-kind smoothie --count 3 --engine llm --format-hint flyer_poster --text-mode in_image --out-subdir smoothie_ad_creatives
 
   HVAC (3 prompts + 3 images), using the default remote ComfyUI backend:
     cd backend
-    uv run scripts/generate_ad_creatives.py --business-kind hvac --count 3 --engine llm --format-hint flyer_poster --text-mode overlay --out-subdir hvac_ad_creatives --image-provider comfyui_bg
+    uv run scripts/generate_ad_creatives.py --business-kind hvac --count 3 --engine llm --format-hint flyer_poster --text-mode in_image --out-subdir hvac_ad_creatives --image-provider comfyui_bg
 
 Notes:
   Canonical production flow is API + worker (`/api/v1/creative-runs` + `run_creative_worker.py`).
@@ -97,7 +97,7 @@ def main() -> None:
         help="Number of image renders per prompt (default: 1).",
     )
     parser.add_argument("--business-kind", choices=["smoothie", "hvac"], default="smoothie")
-    parser.add_argument("--text-mode", choices=["overlay", "in_image"], default="overlay")
+    parser.add_argument("--text-mode", choices=["overlay", "in_image"], default="in_image")
     parser.add_argument(
         "--format-hint",
         choices=["ad_creative", "flyer", "poster", "flyer_poster"],

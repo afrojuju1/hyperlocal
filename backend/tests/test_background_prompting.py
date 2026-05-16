@@ -28,6 +28,7 @@ class BackgroundPromptingTests(unittest.TestCase):
                 images_per_prompt=1,
                 prompt_engine="template",
                 background_provider="comfyui_bg",
+                text_mode="overlay",
             ),
         )
 
@@ -35,7 +36,8 @@ class BackgroundPromptingTests(unittest.TestCase):
 
         self.assertEqual(len(specs), 2)
         for spec in specs:
-            self.assertIn("No text of any kind", spec.prompt)
+            self.assertIn("plain and unmarked", spec.prompt)
+            self.assertIn("one open, calm area", spec.prompt)
             self.assertTrue(spec.negative_prompt)
 
     def test_llm_prompt_specs_fall_back_to_templates(self) -> None:
@@ -53,6 +55,7 @@ class BackgroundPromptingTests(unittest.TestCase):
                 images_per_prompt=1,
                 prompt_engine="llm",
                 background_provider="comfyui_bg",
+                text_mode="overlay",
             ),
         )
 
@@ -63,7 +66,36 @@ class BackgroundPromptingTests(unittest.TestCase):
             specs = service._build_prompt_specs(request)
 
         self.assertEqual(len(specs), 1)
-        self.assertIn("No text of any kind", specs[0].prompt)
+        self.assertIn("plain and unmarked", specs[0].prompt)
+
+    def test_in_image_prompt_specs_ask_model_for_finished_ad(self) -> None:
+        service = BackgroundGenerationService()
+        request = CreativeRunRequest(
+            business=CreativeBusinessInput(name="Sunset Smoothie Co."),
+            campaign=CreativeCampaignInput(
+                business_kind="smoothie",
+                product="Mango smoothie",
+                offer="BUY 1 GET 1 50% OFF",
+                cta="ORDER NOW",
+            ),
+            generation=CreativeGenerationOptions(
+                count=1,
+                images_per_prompt=1,
+                prompt_engine="template",
+                background_provider="comfyui_bg",
+                text_mode="in_image",
+            ),
+        )
+
+        specs = service._build_prompt_specs(request)
+
+        self.assertEqual(len(specs), 1)
+        self.assertIn("finished vertical 6x9 ad creative", specs[0].prompt)
+        self.assertIn('"Sunset Smoothie Co."', specs[0].prompt)
+        self.assertIn('"BUY 1 GET 1 50% OFF"', specs[0].prompt)
+        self.assertNotIn("ORDER NOW", specs[0].prompt)
+        self.assertIn("No other readable words should appear.", specs[0].prompt)
+        self.assertIn("do not put text inside boxes", specs[0].prompt)
 
 
 if __name__ == "__main__":
