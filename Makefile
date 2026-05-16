@@ -28,10 +28,10 @@ logs: ## Follow Docker stack logs
 dev: up ## Start the normal local dev stack
 
 api: ## Run the FastAPI app locally
-	cd $(API_DIR) && uv run uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+	cd $(API_DIR) && PYTHONPATH=src uv run uvicorn hyperlocal.api.main:app --host 0.0.0.0 --port 8000 --reload
 
 worker: ## Run the creative worker locally
-	cd $(API_DIR) && uv run scripts/run_creative_worker.py
+	cd $(API_DIR) && PYTHONPATH=src uv run scripts/run_creative_worker.py
 
 web: ## Run the Next.js app locally
 	cd $(WEB_DIR) && bun run dev
@@ -48,15 +48,15 @@ db-reset: ## Drop and recreate the local database schema, with confirmation
 check: check-api check-web ## Run the full quality gate
 
 check-api: ## Run API tests and compile checks
-	cd $(API_DIR) && uv run python -m unittest discover -s tests
-	cd $(API_DIR) && uv run python -m compileall hyperlocal scripts tests
+	cd $(API_DIR) && PYTHONPATH=src uv run python -m unittest discover -s tests
+	cd $(API_DIR) && PYTHONPATH=src uv run python -m compileall src/hyperlocal scripts tests
 
 check-web: ## Run frontend lint and production build
 	cd $(WEB_DIR) && bun run lint
 	cd $(WEB_DIR) && bun run build
 
 smoke: ## Run stack health checks
-	cd $(API_DIR) && uv run scripts/check_stack.py
+	cd $(API_DIR) && PYTHONPATH=src uv run scripts/check_stack.py
 
 generate: ## Enqueue a sample creative run against the local API
 	curl -sS -X POST "$(API_BASE_URL)/api/v1/creative-runs" \

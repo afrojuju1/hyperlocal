@@ -2,6 +2,7 @@ FROM python:3.12
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app/src \
     UV_PYTHON=/usr/local/bin/python3.12
 
 WORKDIR /app
@@ -18,4 +19,4 @@ COPY apps/api /app
 
 EXPOSE 8000
 
-CMD ["uv", "run", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "hyperlocal.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

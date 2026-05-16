@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from api.main import app
+from hyperlocal.api.main import app
 
 
 @dataclass
@@ -89,7 +89,7 @@ class CreativeRunsApiTests(unittest.TestCase):
         }
 
         fake_manager = FakeManager()
-        with patch("api.routes.creative_runs._manager", return_value=fake_manager):
+        with patch("hyperlocal.api.routes.creative_runs._manager", return_value=fake_manager):
             client = TestClient(app)
             create_resp = client.post("/api/v1/creative-runs", json=payload)
             self.assertEqual(create_resp.status_code, 200)

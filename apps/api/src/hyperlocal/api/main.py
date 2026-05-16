@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-from api.routes.creative_runs import router as creative_runs_router
+from hyperlocal.api.routes.creative_runs import router as creative_runs_router
 from hyperlocal.config import RUNTIME_CONFIG
 from hyperlocal.db import init_db
 from hyperlocal.health import run_health_checks
