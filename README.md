@@ -9,31 +9,27 @@ Hyperlocal is a canonical async creative-generation pipeline that combines:
 
 ## Quick Start
 ```bash
-cd backend
-uv sync
+make setup
 ```
 
 ## Containers
 ```bash
-docker compose up -d --build
+make up
 ```
 
 Apply schema:
 ```bash
-psql "$DATABASE_URL" -f backend/sql/schema.sql
+make db-init
 ```
 
 Run worker:
 ```bash
-cd backend
-uv run scripts/run_creative_worker.py
+make worker
 ```
 
 ## Frontend
 ```bash
-cd web
-bun install
-bun run dev
+make web
 ```
 
 ## Ports (Docker)

@@ -1,0 +1,44 @@
+{
+  "business": {
+    "name": "Sunset Smoothie Co.",
+    "city": "Austin",
+    "state": "TX"
+  },
+  "campaign": {
+    "business_kind": "smoothie",
+    "product": "Mango smoothie",
+    "offer": "BUY 1 GET 1 50% OFF",
+    "cta": "ORDER NOW",
+    "audience": "nearby college students and young professionals",
+    "tone": "bright, premium, energetic",
+    "constraints": [
+      "avoid boxed coupon layouts"
+    ],
+    "brand_colors": [
+      "mango orange",
+      "deep green"
+    ],
+    "style_keywords": [
+      "sunlit",
+      "editorial",
+      "fresh fruit"
+    ],
+    "format_hint": "flyer_poster"
+  },
+  "generation": {
+    "count": 1,
+    "images_per_prompt": 1,
+    "prompt_engine": "llm",
+    "image_provider": "comfyui_bg",
+    "creative_mode": "full_ad"
+  },
+  "overlay": {
+    "brand_kit": "config/brand_kits/smoothie_default.json",
+    "template_mode": "cycle",
+    "seed": 42,
+    "copy_mode": "auto"
+  },
+  "output": {
+    "subdir": "creative_runs"
+  }
+}

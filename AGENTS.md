@@ -15,20 +15,17 @@ Hyperlocal is a flyer-generation pipeline that uses:
 
 ## Setup
 ```bash
-cd backend
-uv sync
+make setup
 ```
 
 ## Frontend
 ```bash
-cd web
-bun install
-bun run dev
+make web
 ```
 
 ## Local Infrastructure
 ```bash
-docker compose up -d
+make up
 ```
 
 ## Ports (Docker)
@@ -38,13 +35,12 @@ docker compose up -d
 
 ## Database (Option B)
 ```bash
-psql "$DATABASE_URL" -f backend/sql/schema.sql
+make db-init
 ```
 
 ## Run Flyer Generation
 ```bash
-cd backend
-uv run scripts/run_creative_worker.py
+make worker
 ```
 
 ## Environment
@@ -79,6 +75,7 @@ Use `.env` (see `backend/.env.example`) and set at minimum:
 2. **Commit intentionally** - Include all intended changes and no generated output
 3. **PUSH TO REMOTE** - This is MANDATORY when the user asks to land the work:
    ```bash
+   make check
    git pull --rebase
    git push
    git status  # MUST show "up to date with origin"
