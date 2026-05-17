@@ -77,6 +77,7 @@ Run one example:
 
 ```bash
 make generate-example EXAMPLE=hvac
+make generate-example EXAMPLE=coffee
 ```
 
 Run every payload in `examples/`:

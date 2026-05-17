@@ -43,6 +43,7 @@ from hyperlocal.integrations.images import (
 from hyperlocal.integrations.openai import build_client, generate_image
 
 from hyperlocal.creative.prompting import build_llm_prompts, build_template_prompts
+from hyperlocal.creative.vertical_config import load_vertical_configs
 
 
 def timestamp() -> str:
@@ -97,7 +98,7 @@ def main() -> None:
         default=1,
         help="Number of image renders per prompt (default: 1).",
     )
-    parser.add_argument("--business-kind", choices=["smoothie", "hvac"], default="smoothie")
+    parser.add_argument("--business-kind", choices=sorted(load_vertical_configs()), default="smoothie")
     parser.add_argument("--text-mode", choices=["overlay", "in_image"], default="in_image")
     parser.add_argument(
         "--format-hint",

@@ -30,6 +30,7 @@ from dotenv import load_dotenv
 from hyperlocal.core.config import RUNTIME_CONFIG
 from hyperlocal.creative.vertical_config import (
     get_vertical_config,
+    load_vertical_configs,
     vertical_items,
     vertical_mode_list,
     vertical_mode_text,
@@ -559,7 +560,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Generate ad-creative image prompts (prompt-only).")
     parser.add_argument("--engine", choices=["template", "llm"], default="template")
     parser.add_argument("--count", type=int, default=6, help="Number of prompts to generate.")
-    parser.add_argument("--business-kind", choices=["smoothie", "hvac", "real_estate"], default="smoothie")
+    parser.add_argument("--business-kind", choices=sorted(load_vertical_configs()), default="smoothie")
     parser.add_argument("--text-mode", choices=["overlay", "in_image"], default="in_image")
     parser.add_argument(
         "--format-hint",

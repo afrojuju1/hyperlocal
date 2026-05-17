@@ -1,0 +1,47 @@
+{
+  "business": {
+    "name": "Cedar & Steam Coffee",
+    "city": "Austin",
+    "state": "TX"
+  },
+  "campaign": {
+    "business_kind": "coffee",
+    "product": "Espresso drinks and fresh pastries",
+    "offer": "FREE PASTRY WITH ANY LATTE",
+    "cta": "ORDER AHEAD",
+    "audience": "nearby commuters, students, and remote workers",
+    "tone": "warm, premium, friendly",
+    "constraints": [
+      "no readable menus",
+      "no cup logos",
+      "avoid boxed coupon layouts"
+    ],
+    "brand_colors": [
+      "espresso brown",
+      "cream",
+      "copper"
+    ],
+    "style_keywords": [
+      "latte art",
+      "morning light",
+      "cozy cafe"
+    ],
+    "format_hint": "flyer_poster"
+  },
+  "generation": {
+    "count": 1,
+    "images_per_prompt": 1,
+    "prompt_engine": "llm",
+    "image_provider": "comfyui_bg",
+    "creative_mode": "full_ad"
+  },
+  "overlay": {
+    "brand_kit": "config/brand_kits/smoothie_default.json",
+    "template_mode": "cycle",
+    "seed": 204,
+    "copy_mode": "auto"
+  },
+  "output": {
+    "subdir": "creative_runs"
+  }
+}

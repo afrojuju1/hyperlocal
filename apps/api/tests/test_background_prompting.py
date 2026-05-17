@@ -246,6 +246,45 @@ class BackgroundPromptingTests(unittest.TestCase):
         self.assertNotIn("Brand color direction: mango orange, deep green.", spec.prompt)
         self.assertIn("Style keywords: editorial, sunlit.", spec.prompt)
 
+    def test_restaurant_lane_prompts_are_text_free(self) -> None:
+        service = ImageGenerationService()
+        cases = [
+            ("coffee", "Cedar & Steam Coffee", "Espresso drinks", "FREE PASTRY WITH ANY LATTE"),
+            ("thai", "Thai Basil Kitchen", "Pad thai and curry", "$5 OFF ORDERS OVER $30"),
+            ("wings", "Firebird Wings", "Buffalo wings", "20 WINGS + FRIES FOR $24"),
+        ]
+
+        for business_kind, business_name, product, offer in cases:
+            with self.subTest(business_kind=business_kind):
+                request = CreativeRunRequest(
+                    business=CreativeBusinessInput(name=business_name),
+                    campaign=CreativeCampaignInput(
+                        business_kind=business_kind,
+                        product=product,
+                        offer=offer,
+                        cta="ORDER NOW",
+                        brand_colors=["red", "cream"],
+                    ),
+                    generation=CreativeGenerationOptions(
+                        count=1,
+                        images_per_prompt=1,
+                        prompt_engine="template",
+                        image_provider="comfyui_bg",
+                        creative_mode="full_ad",
+                    ),
+                )
+
+                spec = service._build_prompt_specs(request)[0]
+
+                self.assertIn("text-free source image", spec.prompt)
+                self.assertIn("plain and unmarked", spec.prompt)
+                self.assertNotIn(business_name, spec.prompt)
+                self.assertNotIn(offer, spec.prompt)
+                self.assertNotIn("Brand color direction", spec.prompt)
+                self.assertIn("Avoid readable text", spec.negative_prompt)
+                if business_kind == "wings":
+                    self.assertNotIn("wings", spec.prompt.lower())
+
 
 if __name__ == "__main__":
     unittest.main()

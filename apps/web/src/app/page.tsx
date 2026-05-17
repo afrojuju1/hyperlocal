@@ -9,6 +9,9 @@ const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces" });
 
 const presets = {
   smoothie: {
+    label: "Smoothie",
+    businessKind: "smoothie",
+    brandKit: "config/brand_kits/smoothie_default.json",
     campaignId: 1,
     name: "Sunset Smoothie Co.",
     website: "sunsetsmoothie.co",
@@ -29,6 +32,9 @@ const presets = {
     styleKeywords: "fresh, modern, clean, tropical",
   },
   realEstate: {
+    label: "Real Estate",
+    businessKind: "real_estate",
+    brandKit: "config/brand_kits/smoothie_default.json",
     campaignId: 2,
     name: "RapidKeys Home Buyers",
     website: "rapidkeyshomebuyers.com",
@@ -49,6 +55,9 @@ const presets = {
     styleKeywords: "professional, real-estate, clean, photographic",
   },
   hvac: {
+    label: "Plumbing/HVAC",
+    businessKind: "hvac",
+    brandKit: "config/brand_kits/hvac_default.json",
     campaignId: 3,
     name: "Northside Plumbing & HVAC",
     website: "northsideplumbinghvac.com",
@@ -68,10 +77,83 @@ const presets = {
     brandColors: "blue, red, white",
     styleKeywords: "bold, trustworthy, industrial, clean",
   },
+  coffee: {
+    label: "Coffee",
+    businessKind: "coffee",
+    brandKit: "config/brand_kits/smoothie_default.json",
+    campaignId: 4,
+    name: "Cedar & Steam Coffee",
+    website: "cedarsteamcoffee.com",
+    address: "1208 E 11th St",
+    city: "Austin",
+    state: "TX",
+    postal: "78702",
+    phone: "(512) 555-0166",
+    hours: "Mon-Sun 7am-5pm",
+    serviceArea: "East Austin",
+    product: "Espresso drinks and fresh pastries",
+    offer: "Free pastry with any latte",
+    tone: "warm, premium, friendly",
+    cta: "Order Ahead",
+    audience: "nearby commuters, students, and remote workers",
+    constraints: "No readable menus\nNo cup logos\nAvoid boxed coupon layouts",
+    brandColors: "espresso brown, cream, copper",
+    styleKeywords: "latte art, morning light, cozy cafe",
+  },
+  thai: {
+    label: "Thai",
+    businessKind: "thai",
+    brandKit: "config/brand_kits/smoothie_default.json",
+    campaignId: 5,
+    name: "Thai Basil Kitchen",
+    website: "thaibasilkitchen.com",
+    address: "2314 S Congress Ave",
+    city: "Austin",
+    state: "TX",
+    postal: "78704",
+    phone: "(512) 555-0177",
+    hours: "Daily 11am-10pm",
+    serviceArea: "South Austin",
+    product: "Pad thai, curry, and Thai lunch specials",
+    offer: "$5 off orders over $30",
+    tone: "vibrant, inviting, fresh",
+    cta: "Order Tonight",
+    audience: "nearby families, office lunch groups, and dinner takeout customers",
+    constraints: "No readable menus\nNo takeout labels\nAvoid boxed coupon layouts",
+    brandColors: "basil green, chili red, warm cream",
+    styleKeywords: "fresh herbs, warm table light, vibrant Thai food",
+  },
+  wings: {
+    label: "Wings",
+    businessKind: "wings",
+    brandKit: "config/brand_kits/smoothie_default.json",
+    campaignId: 6,
+    name: "Firebird Wings",
+    website: "firebirdwings.com",
+    address: "6400 Burnet Rd",
+    city: "Austin",
+    state: "TX",
+    postal: "78757",
+    phone: "(512) 555-0188",
+    hours: "Sun-Thu 11am-11pm, Fri-Sat 11am-1am",
+    serviceArea: "North Austin",
+    product: "Buffalo wings, fries, and game-day combos",
+    offer: "20 wings + fries for $24",
+    tone: "bold, craveable, energetic",
+    cta: "Order Now",
+    audience: "nearby sports fans, families, and late-night takeout customers",
+    constraints:
+      "No people\nNo TV screens\nNo jersey lettering\nNo printed basket liners\nAvoid boxed coupon layouts",
+    brandColors: "flame orange, deep red, charcoal",
+    styleKeywords: "saucy chicken, takeout spread, crispy texture",
+  },
 };
 
 type PresetKey = keyof typeof presets;
-type EditableFieldKey = Exclude<keyof typeof presets.smoothie, "campaignId">;
+type EditableFieldKey = Exclude<
+  keyof typeof presets.smoothie,
+  "campaignId" | "businessKind" | "brandKit" | "label"
+>;
 
 const formFields: ReadonlyArray<{ label: string; key: EditableFieldKey }> = [
   { label: "Business Name", key: "name" },
@@ -207,12 +289,7 @@ export default function Home() {
     setRunId(null);
     setRunStage("queued (0%)");
     try {
-      const businessKind =
-        preset === "hvac"
-          ? "hvac"
-          : preset === "realEstate"
-            ? "real_estate"
-            : "smoothie";
+      const businessKind = form.businessKind;
       const payload = {
         business: {
           name: form.name,
@@ -254,10 +331,7 @@ export default function Home() {
           creative_mode: "full_ad",
         },
         overlay: {
-          brand_kit:
-            businessKind === "hvac"
-              ? "config/brand_kits/hvac_default.json"
-              : "config/brand_kits/smoothie_default.json",
+          brand_kit: form.brandKit,
           template_mode: "cycle",
           seed: 42,
           copy_mode: "auto",
@@ -311,8 +385,8 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="flex gap-2 text-xs font-medium">
-            {(["smoothie", "realEstate", "hvac"] as PresetKey[]).map((key) => (
+          <div className="flex flex-wrap gap-2 text-xs font-medium">
+            {(Object.keys(presets) as PresetKey[]).map((key) => (
               <button
                 key={key}
                 type="button"
@@ -323,11 +397,7 @@ export default function Home() {
                     : "border-black/10 bg-white text-zinc-600"
                 }`}
               >
-                {key === "smoothie"
-                  ? "Smoothie"
-                  : key === "realEstate"
-                    ? "Real Estate"
-                    : "Plumbing/HVAC"}
+                {presets[key].label}
               </button>
             ))}
           </div>

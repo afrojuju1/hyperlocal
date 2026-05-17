@@ -32,6 +32,7 @@ make worker
 Run examples against the local API/worker stack:
 ```bash
 make generate-example EXAMPLE=hvac
+make generate-example EXAMPLE=coffee
 make generate-all-examples
 ```
 
@@ -48,7 +49,7 @@ make web
 ## Monorepo Layout
 - `apps/api`: FastAPI API, creative worker, Python domain code, SQL, and API config.
 - `apps/web`: Next.js web app.
-- `examples`: sample API payloads for local runs.
+- `examples`: sample API payloads for local runs, including smoothie, coffee, Thai, wings, HVAC, and real estate.
 - `docs`: architecture and operations notes.
 - `output`: ignored generated assets.
 

@@ -1,0 +1,47 @@
+{
+  "business": {
+    "name": "Thai Basil Kitchen",
+    "city": "Austin",
+    "state": "TX"
+  },
+  "campaign": {
+    "business_kind": "thai",
+    "product": "Pad thai, curry, and Thai lunch specials",
+    "offer": "$5 OFF ORDERS OVER $30",
+    "cta": "ORDER TONIGHT",
+    "audience": "nearby families, office lunch groups, and dinner takeout customers",
+    "tone": "vibrant, inviting, fresh",
+    "constraints": [
+      "no readable menus",
+      "no takeout labels",
+      "avoid boxed coupon layouts"
+    ],
+    "brand_colors": [
+      "basil green",
+      "chili red",
+      "warm cream"
+    ],
+    "style_keywords": [
+      "fresh herbs",
+      "warm table light",
+      "vibrant Thai food"
+    ],
+    "format_hint": "flyer_poster"
+  },
+  "generation": {
+    "count": 1,
+    "images_per_prompt": 1,
+    "prompt_engine": "llm",
+    "image_provider": "comfyui_bg",
+    "creative_mode": "full_ad"
+  },
+  "overlay": {
+    "brand_kit": "config/brand_kits/smoothie_default.json",
+    "template_mode": "cycle",
+    "seed": 205,
+    "copy_mode": "auto"
+  },
+  "output": {
+    "subdir": "creative_runs"
+  }
+}

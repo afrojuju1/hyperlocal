@@ -1,0 +1,49 @@
+{
+  "business": {
+    "name": "Firebird Wings",
+    "city": "Austin",
+    "state": "TX"
+  },
+  "campaign": {
+    "business_kind": "wings",
+    "product": "Buffalo wings, fries, and game-day combos",
+    "offer": "20 WINGS + FRIES FOR $24",
+    "cta": "ORDER NOW",
+    "audience": "nearby sports fans, families, and late-night takeout customers",
+    "tone": "bold, craveable, energetic",
+    "constraints": [
+      "no people",
+      "no TV screens",
+      "no jersey lettering",
+      "no printed basket liners",
+      "avoid boxed coupon layouts"
+    ],
+    "brand_colors": [
+      "flame orange",
+      "deep red",
+      "charcoal"
+    ],
+    "style_keywords": [
+      "saucy chicken",
+      "takeout spread",
+      "crispy texture"
+    ],
+    "format_hint": "flyer_poster"
+  },
+  "generation": {
+    "count": 1,
+    "images_per_prompt": 1,
+    "prompt_engine": "llm",
+    "image_provider": "comfyui_bg",
+    "creative_mode": "full_ad"
+  },
+  "overlay": {
+    "brand_kit": "config/brand_kits/smoothie_default.json",
+    "template_mode": "cycle",
+    "seed": 206,
+    "copy_mode": "auto"
+  },
+  "output": {
+    "subdir": "creative_runs"
+  }
+}

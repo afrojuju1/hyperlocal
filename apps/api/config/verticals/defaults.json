@@ -81,6 +81,311 @@
       "retry_negative_append": "No readable text, no labels, no logos, no signs, no menus, no package lettering, no coupon graphics, no tiny glyph marks, no busy typography-like patterns."
     }
   },
+  "coffee": {
+    "label": "coffee shop",
+    "overlay_subject": "tight coffee shop beverage and pastry photography with latte art, espresso, plain ceramic cups, coffee beans, pastries, or clean cafe counter texture; use close tabletop framing with soft plain background bokeh, not visible wall boards; all cups, bags, sleeves, menus, and walls must be plain and unmarked",
+    "constraints": {
+      "in_image": [
+        "Premium coffee shop advertising photography.",
+        "Latte art, espresso pulls, iced coffee, pastries, beans, cafe counters, warm morning light, and natural hands are allowed when appetizing; prefer tight tabletop or counter framing over wide cafe interiors.",
+        "Avoid readable menus, cup logos, sleeve text, stickers, receipts, chalkboards, brand marks, and storefront signs."
+      ],
+      "overlay": [
+        "Premium coffee shop advertising photography prepared as a text-free source image for later typography.",
+        "Latte art, espresso pulls, iced coffee, pastries, beans, cafe counters, warm morning light, and natural hands are allowed when appetizing.",
+        "Avoid readable menus, cup logos, sleeve text, stickers, receipts, chalkboards, brand marks, and storefront signs."
+      ]
+    },
+    "negative_prompt_extra": {
+      "in_image": "Avoid menu boards, chalkboards, cup logos, sleeve text, stickers, receipts, labels, brand marks, and storefront signs.",
+      "overlay": "Avoid menu boards, chalkboards, cup logos, sleeve text, stickers, receipts, labels, brand marks, and storefront signs."
+    },
+    "template_directions": [
+      {
+        "slug": "latte_counter",
+        "title": "Latte Counter",
+        "prompt": "A ceramic latte with clean latte art on a warm cafe counter, pastry crumbs, coffee beans, and morning window light. No cup logo, menu, receipt, label, or readable wall decor."
+      },
+      {
+        "slug": "espresso_pull",
+        "title": "Espresso Pull",
+        "prompt": "Close editorial espresso pull with crema streaming into a plain demitasse cup, chrome machine details softly blurred, rich coffee texture, and calm negative space. No brand marks or machine labels."
+      },
+      {
+        "slug": "iced_coffee_pickup",
+        "title": "Iced Coffee Pickup",
+        "prompt": "A natural hand picking up a condensation-covered iced coffee in a plain clear cup on a bright cafe counter, soft pastries nearby, fresh and local. No cup text, sleeve, menu, sticker, or signage."
+      },
+      {
+        "slug": "pastry_pairing",
+        "title": "Pastry Pairing",
+        "prompt": "Premium pastry and coffee pairing on a wood counter: croissant, plain mug, beans, warm highlights, shallow depth of field, and inviting cafe atmosphere. No packaging text or menu boards."
+      }
+    ],
+    "style_variants": [
+      {
+        "slug": "morning_window",
+        "title": "Morning Window",
+        "prompt": "Warm morning window light, cozy but clean, appetizing highlights."
+      },
+      {
+        "slug": "premium_cafe",
+        "title": "Premium Cafe",
+        "prompt": "Premium cafe editorial lighting, shallow depth of field, rich texture."
+      },
+      {
+        "slug": "energetic_pickup",
+        "title": "Energetic Pickup",
+        "prompt": "Fresh grab-and-go energy, natural motion, crisp commercial polish."
+      }
+    ],
+    "llm_art_direction": "For coffee shops, think like a premium beverage art director: latte art, crema, condensation, pastries, warm cafe counters, tactile beans, and morning light without menus, chalkboards, labels, or signage.",
+    "overlay_guardrails": [
+      "For coffee overlay prompts, use tight tabletop or counter compositions with soft plain background bokeh; keep cups, bags, sleeves, menus, walls, and machines plain and unmarked; avoid visible menu boards, chalkboards, labels, receipts, and storefront signage."
+    ],
+    "candidate_reject_terms": [
+      "menu",
+      "menu board",
+      "chalkboard",
+      "sign",
+      "signage",
+      "logo",
+      "label",
+      "sticker",
+      "receipt",
+      "storefront",
+      "street",
+      "price",
+      "qr",
+      "poster",
+      "sleeve text"
+    ],
+    "audience_replacements": [],
+    "layout": {
+      "headline_color": "#3B241A",
+      "offer_color": "#A15C22",
+      "stroke_color": "#FFFFFF"
+    },
+    "qc": {
+      "text_score_threshold": 34,
+      "red_text_score_threshold": 75,
+      "blue_text_score_threshold": 95,
+      "calm_zone_score_threshold": 88,
+      "retry_prompt_append": "Retry correction: crop tighter on the drink, pastry, counter, or tabletop with soft plain background bokeh. Keep cups, sleeves, bags, menus, counters, and walls plain and unmarked; remove chalkboards, menu boards, labels, logos, receipts, prices, and signage while preserving one calm low-detail area for exact typography.",
+      "retry_negative_append": "No readable text, no cup logos, no sleeve text, no menu boards, no chalkboards, no receipts, no labels, no stickers, no prices, no storefront signs, no wall lettering."
+    }
+  },
+  "thai": {
+    "label": "Thai restaurant",
+    "overlay_subject": "tight Thai food photography with plated pad thai, curry bowls, basil stir-fry, fresh herbs, lime, chili, jasmine rice, mango sticky rice, tableware, or warm tabletop moments; use close food/table framing with soft plain background bokeh, not visible restaurant walls; no menus, labels, packaging text, wall art, or signage",
+    "constraints": {
+      "in_image": [
+        "Premium Thai restaurant food advertising photography.",
+        "Fresh herbs, noodles, curry, rice, chili, lime, steam, glossy sauces, table settings, and hand-served dishes are allowed when appetizing; prefer close tabletop framing over wide restaurant interiors.",
+        "Avoid readable menus, takeout labels, receipt text, packaging marks, storefront signs, and decorative wall lettering."
+      ],
+      "overlay": [
+        "Premium Thai restaurant food photography prepared as a text-free source image for later typography.",
+        "Fresh herbs, noodles, curry, rice, chili, lime, steam, glossy sauces, table settings, and hand-served dishes are allowed when appetizing.",
+        "Avoid readable menus, takeout labels, receipt text, packaging marks, storefront signs, and decorative wall lettering."
+      ]
+    },
+    "negative_prompt_extra": {
+      "in_image": "Avoid menus, menu boards, receipt text, takeout labels, packaging marks, storefront signs, and decorative wall lettering.",
+      "overlay": "Avoid menus, menu boards, receipt text, takeout labels, packaging marks, storefront signs, and decorative wall lettering."
+    },
+    "template_directions": [
+      {
+        "slug": "pad_thai_closeup",
+        "title": "Pad Thai Closeup",
+        "prompt": "A glossy plated pad thai close-up with lime, crushed peanuts, herbs, chili flakes, steam, and warm restaurant table texture. No menu, plate logo, receipt, label, or readable decor."
+      },
+      {
+        "slug": "curry_table",
+        "title": "Curry Table",
+        "prompt": "A rich Thai curry bowl with jasmine rice, basil, chili oil, coconut sheen, ceramic tableware, and inviting warm light. Keep all bowls and background surfaces plain and unmarked."
+      },
+      {
+        "slug": "basil_wok",
+        "title": "Basil Wok",
+        "prompt": "Dynamic Thai basil stir-fry being served from a wok into a clean bowl, glossy sauce, green herbs, steam, and natural motion. No packaging, menus, signage, or readable marks."
+      },
+      {
+        "slug": "mango_sticky_rice",
+        "title": "Mango Sticky Rice",
+        "prompt": "Mango sticky rice with coconut drizzle, sesame, banana leaf texture, warm highlights, and premium dessert styling with calm negative space. No label, menu, or decorative text."
+      }
+    ],
+    "style_variants": [
+      {
+        "slug": "warm_table",
+        "title": "Warm Table",
+        "prompt": "Warm restaurant table light, inviting shadows, vibrant but natural color."
+      },
+      {
+        "slug": "vibrant_overhead",
+        "title": "Vibrant Overhead",
+        "prompt": "Organized overhead food composition, rich color contrast, editorial polish."
+      },
+      {
+        "slug": "steam_closeup",
+        "title": "Steam Closeup",
+        "prompt": "Tight cinematic food close-up with steam, glossy sauce, and shallow depth."
+      }
+    ],
+    "llm_art_direction": "For Thai restaurants, think like a premium food art director: aromatic steam, herbs, lime, chili, noodles, curry, rice, glossy sauce, and shareable table energy without menus, labels, packaging text, or signage.",
+    "overlay_guardrails": [
+      "For Thai restaurant overlay prompts, use close tabletop food compositions with soft plain background bokeh; keep dishes, packaging, table tents, menus, walls, and takeout containers plain and unmarked; avoid visible menu boards, wall posters, labels, receipts, and signage."
+    ],
+    "candidate_reject_terms": [
+      "menu",
+      "menu board",
+      "sign",
+      "signage",
+      "logo",
+      "label",
+      "receipt",
+      "takeout box",
+      "packaging",
+      "storefront",
+      "street",
+      "price",
+      "qr",
+      "poster",
+      "wall lettering"
+    ],
+    "audience_replacements": [],
+    "layout": {
+      "headline_color": "#2F3A1F",
+      "offer_color": "#B33A1B",
+      "stroke_color": "#FFF7EC"
+    },
+    "qc": {
+      "text_score_threshold": 70,
+      "red_text_score_threshold": 120,
+      "blue_text_score_threshold": 95,
+      "calm_zone_score_threshold": 88,
+      "retry_prompt_append": "Retry correction: crop tighter on the food and tabletop with soft plain background bokeh. Keep menus, packaging, bowls, walls, and table items plain and unmarked; remove labels, logos, receipts, prices, menu boards, wall posters, and signage while preserving one calm low-detail area for exact typography.",
+      "retry_negative_append": "No readable text, no menus, no menu boards, no labels, no logos, no receipts, no packaging text, no table-tent text, no storefront signs, no wall lettering."
+    }
+  },
+  "wings": {
+    "label": "wing restaurant",
+    "overlay_subject": "tight tabletop food photography with saucy chicken drumettes and flats, baskets, dipping sauces, fries, celery, tabletop texture, or takeout-ready food; use close food/studio framing with a plain neutral background and no visible venue interior; no people, faces, walls, menus, labels, packaging text, screens, jerseys, football props, beer mugs, posters, or signage",
+    "constraints": {
+      "in_image": [
+        "Premium saucy chicken food advertising photography.",
+        "Saucy chicken drumettes and flats, crispy texture, dips, fries, celery, baskets, table texture, glaze, and steam are allowed when appetizing; use tight food-only framing with a plain neutral background and avoid people, faces, walls, or venue interiors.",
+        "Avoid readable menus, sports screens, jersey lettering, takeout labels, packaging marks, storefront signs, and wall lettering."
+      ],
+      "overlay": [
+        "Premium saucy chicken food photography prepared as a text-free source image for later typography.",
+        "Saucy chicken drumettes and flats, crispy texture, dips, fries, celery, baskets, table texture, glaze, and steam are allowed when appetizing; use tight food-only framing with a plain neutral background and avoid people, faces, walls, or venue interiors.",
+        "Avoid readable menus, sports screens, jersey lettering, takeout labels, packaging marks, storefront signs, and wall lettering."
+      ]
+    },
+    "negative_prompt_extra": {
+      "in_image": "Avoid people, faces, walls, venue interiors, menus, menu boards, TV screens, jersey lettering, takeout labels, packaging marks, storefront signs, posters, and wall lettering.",
+      "overlay": "Avoid people, faces, walls, venue interiors, menus, menu boards, TV screens, jersey lettering, takeout labels, packaging marks, storefront signs, posters, and wall lettering."
+    },
+    "template_directions": [
+      {
+        "slug": "saucy_wings_closeup",
+        "title": "Saucy Wings Closeup",
+        "prompt": "Close-up basket of saucy buffalo chicken drumettes and flats with glossy glaze, crispy texture, celery, ranch dip, and warm table light. No basket liner text, menu, label, screen, or signage."
+      },
+      {
+        "slug": "wing_toss_motion",
+        "title": "Wing Toss Motion",
+        "prompt": "Dynamic sauce toss moment with chicken drumettes and flats in a stainless bowl, orange glaze, motion, steam, and appetizing highlights. Keep all background surfaces plain and unmarked."
+      },
+      {
+        "slug": "game_day_spread",
+        "title": "Game Day Spread",
+        "prompt": "Tight tabletop spread with saucy chicken drumettes and flats, fries, dips, celery, napkins, and plain glasses, energetic but uncluttered against a plain neutral background. No wall, venue interior, football props, TV screens, jerseys, menus, logos, posters, wall signs, or readable marks."
+      },
+      {
+        "slug": "takeout_feast",
+        "title": "Takeout Feast",
+        "prompt": "Takeout-ready saucy chicken feast in plain unbranded containers with fries, sauces, steam, and bold appetizing color. No package labels, receipts, stickers, or printed liners."
+      }
+    ],
+    "style_variants": [
+      {
+        "slug": "bold_appetite",
+        "title": "Bold Appetite",
+        "prompt": "Bold appetizing highlights, warm shadows, rich sauce texture."
+      },
+      {
+        "slug": "takeout_energy",
+        "title": "Takeout Energy",
+        "prompt": "Energetic takeout-table composition, lively food abundance, no readable graphics."
+      },
+      {
+        "slug": "crispy_macro",
+        "title": "Crispy Macro",
+        "prompt": "Tight macro food texture, crispy edges, glossy sauce, shallow depth."
+      }
+    ],
+    "llm_art_direction": "For wing restaurants, think like a premium comfort-food art director shooting a food-only tabletop or studio scene: describe the food as saucy chicken drumettes and flats, never as the word wings. Focus on sauce gloss, crispy texture, baskets, dips, fries, celery, and appetite without people, faces, hands, walls, venue interiors, football props, beer mugs, menus, screens, labels, jerseys, packaging text, posters, or signage.",
+    "overlay_guardrails": [
+      "For wing restaurant overlay prompts, use close food/table compositions with a plain neutral background; avoid people, faces, hands, walls, venue interiors, menus, TV screens, football props, beer mugs, jerseys, labels, receipts, printed basket liners, packaging text, wall posters, and signage."
+    ],
+    "candidate_reject_terms": [
+      "menu",
+      "menu board",
+      "tv",
+      "screen",
+      "wall",
+      "wings",
+      "interior",
+      "venue",
+      "poster",
+      "framed",
+      "football",
+      "beer",
+      "bar",
+      "family",
+      "child",
+      "children",
+      "people",
+      "person",
+      "face",
+      "faces",
+      "hand",
+      "hands",
+      "sharing",
+      "patron",
+      "customer",
+      "jersey",
+      "sign",
+      "signage",
+      "logo",
+      "label",
+      "receipt",
+      "packaging",
+      "storefront",
+      "street",
+      "price",
+      "qr",
+      "wall lettering"
+    ],
+    "audience_replacements": [],
+    "layout": {
+      "headline_color": "#42160F",
+      "offer_color": "#C7461C",
+      "stroke_color": "#FFF7EC"
+    },
+    "qc": {
+      "text_score_threshold": 60,
+      "red_text_score_threshold": 150,
+      "blue_text_score_threshold": 95,
+      "dark_text_score_threshold": 115,
+      "calm_zone_score_threshold": 88,
+      "retry_prompt_append": "Retry correction: crop tighter on wings, fries, dips, and tabletop with a plain neutral background. Remove people, faces, hands, walls, venue interiors, baskets, liners, packaging, menus, screens, jerseys, wall posters, sports props, labels, logos, receipts, prices, menu boards, and signage while preserving one calm low-detail area for exact typography.",
+      "retry_negative_append": "No people, no faces, no hands, no walls, no venue interior, no readable text, no menus, no menu boards, no TV screens, no football props, no beer mugs, no jersey lettering, no labels, no logos, no receipts, no packaging text, no printed basket liners, no storefront signs, no posters, no wall lettering."
+    }
+  },
   "hvac": {
     "label": "home-service",
     "overlay_subject": "a clean residential home-service comfort scene with heating and cooling equipment, vents, tools, airflow, or a plain unmarked technician moment; avoid vehicles and text-like graphics",

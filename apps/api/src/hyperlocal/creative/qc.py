@@ -91,6 +91,7 @@ def evaluate_background_image(
         )
     )
     blue_text_threshold = float(cfg.get("blue_text_score_threshold", _DEFAULT_BLUE_TEXT_SCORE_THRESHOLD))
+    dark_text_threshold = _coerce_optional_float(cfg.get("dark_text_score_threshold"))
     calm_threshold = float(cfg.get("calm_zone_score_threshold", _DEFAULT_CALM_ZONE_SCORE_THRESHOLD))
     sign_block_threshold = _coerce_optional_float(cfg.get("sign_block_score_threshold"))
 
@@ -98,6 +99,7 @@ def evaluate_background_image(
     text_score = _text_artifact_score(base)
     red_text_score = _red_text_artifact_score(base)
     blue_text_score = _blue_text_artifact_score(base)
+    dark_text_score = _dark_text_artifact_score(base) if dark_text_threshold is not None else 0.0
     color_text_score = max(red_text_score, blue_text_score)
     sign_block_score = _sign_block_score(base) if sign_block_threshold is not None else 0.0
     calm_metrics = _calm_zone_metrics(base)
@@ -108,6 +110,7 @@ def evaluate_background_image(
         text_score > text_threshold
         or red_text_score > red_text_threshold
         or blue_text_score > blue_text_threshold
+        or (dark_text_threshold is not None and dark_text_score > dark_text_threshold)
         or (sign_block_threshold is not None and sign_block_score > sign_block_threshold)
     ):
         reasons.append("possible_background_text")
@@ -115,7 +118,7 @@ def evaluate_background_image(
         reasons.append("no_calm_typography_zone")
 
     score = round(
-        max(text_score, color_text_score, sign_block_score)
+        max(text_score, color_text_score, dark_text_score, sign_block_score)
         + max(0.0, calm_score - calm_threshold),
         3,
     )
@@ -128,6 +131,8 @@ def evaluate_background_image(
         "red_text_score_threshold": red_text_threshold,
         "blue_text_score": round(blue_text_score, 3),
         "blue_text_score_threshold": blue_text_threshold,
+        "dark_text_score": round(dark_text_score, 3),
+        "dark_text_score_threshold": dark_text_threshold,
         "sign_block_score": round(sign_block_score, 3),
         "sign_block_score_threshold": sign_block_threshold,
         "best_calm_zone_score": round(calm_score, 3),
@@ -329,6 +334,36 @@ def _blue_text_artifact_score(base: Image.Image) -> float:
     return (density * 100.0) + (row_concentration * 120.0)
 
 
+def _dark_text_artifact_score(base: Image.Image) -> float:
+    width = 320
+    height = max(1, round(base.height * (width / base.width)))
+    image = base.resize((width, height))
+    tile_w = 20
+    tile_h = 16
+    textlike_tiles = 0
+    total_tiles = 0
+    row_counts: list[int] = []
+
+    for y in range(0, max(1, height - tile_h + 1), tile_h):
+        if y > height * 0.62:
+            continue
+        row_count = 0
+        for x in range(0, max(1, width - tile_w + 1), tile_w):
+            crop = image.crop((x, y, min(width, x + tile_w), min(height, y + tile_h)))
+            if _tile_has_dark_textlike_color(crop):
+                textlike_tiles += 1
+                row_count += 1
+            total_tiles += 1
+        row_counts.append(row_count)
+
+    if total_tiles == 0:
+        return 0.0
+    tiles_per_row = max(1, width // tile_w)
+    density = textlike_tiles / total_tiles
+    row_concentration = (max(row_counts) / tiles_per_row) if row_counts else 0.0
+    return (density * 100.0) + (row_concentration * 140.0)
+
+
 def _sign_block_score(base: Image.Image) -> float:
     width = 320
     height = max(1, round(base.height * (width / base.width)))
@@ -494,6 +529,40 @@ def _tile_has_signlike_color_block(tile: Image.Image) -> bool:
             )
             colored += 1 if is_red or is_blue else 0
     return (colored / max(1, width * height)) > 0.08
+
+
+def _tile_has_dark_textlike_color(tile: Image.Image) -> bool:
+    width, height = tile.size
+    px = tile.load()
+    mask: list[list[int]] = []
+    dark = 0
+    for y in range(height):
+        row: list[int] = []
+        for x in range(width):
+            red, green, blue = px[x, y]
+            luminance = (0.299 * red) + (0.587 * green) + (0.114 * blue)
+            is_dark = luminance < 86 and (max(red, green, blue) - min(red, green, blue)) < 90
+            row.append(1 if is_dark else 0)
+            dark += 1 if is_dark else 0
+        mask.append(row)
+
+    total = max(1, width * height)
+    ratio = dark / total
+    if not 0.035 <= ratio <= 0.78:
+        return False
+
+    edge_total = 0
+    edge_count = 0
+    for y in range(height):
+        for x in range(max(0, width - 1)):
+            edge_total += abs(mask[y][x] - mask[y][x + 1])
+            edge_count += 1
+    for y in range(max(0, height - 1)):
+        for x in range(width):
+            edge_total += abs(mask[y][x] - mask[y + 1][x])
+            edge_count += 1
+    edge = edge_total / max(1, edge_count)
+    return edge >= 0.02 or 0.12 <= ratio <= 0.55
 
 
 def _coerce_optional_float(value: Any) -> float | None:

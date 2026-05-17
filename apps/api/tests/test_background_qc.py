@@ -85,6 +85,22 @@ class BackgroundQcTests(unittest.TestCase):
 
             self.assertTrue(result.passed)
 
+    def test_thai_red_ingredients_do_not_fail_food_qc(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "thai_food.png"
+            image = Image.new("RGB", (360, 540), "#ead8ba")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((70, 250, 290, 470), fill="#d98628")
+            for x in range(90, 260, 28):
+                draw.ellipse((x, 290, x + 18, 320), fill="#c52020")
+                draw.line((x, 330, x + 70, 390), fill="#efc77d", width=6)
+            draw.ellipse((120, 245, 160, 285), fill="#2c7a2c")
+            image.save(path)
+
+            result = evaluate_background_image(image_path=path, business_kind="thai")
+
+            self.assertTrue(result.passed)
+
     def test_large_blue_signage_fails_color_text_qc(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "blue_sign.png"
@@ -105,6 +121,28 @@ class BackgroundQcTests(unittest.TestCase):
             self.assertGreater(
                 result.metrics["blue_text_score"],
                 result.metrics["blue_text_score_threshold"],
+            )
+
+    def test_dark_wing_wall_text_fails_dark_text_qc(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "dark_wing_text.png"
+            image = Image.new("RGB", (360, 540), "#dfd2bf")
+            draw = ImageDraw.Draw(image)
+            try:
+                font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial Bold.ttf", 72)
+            except OSError:
+                font = ImageFont.load_default()
+            draw.text((40, 120), "JUICY", fill="#111111", font=font)
+            draw.text((30, 205), "WINGS", fill="#111111", font=font)
+            image.save(path)
+
+            result = evaluate_background_image(image_path=path, business_kind="wings")
+
+            self.assertFalse(result.passed)
+            self.assertIn("possible_background_text", result.reasons)
+            self.assertGreater(
+                result.metrics["dark_text_score"],
+                result.metrics["dark_text_score_threshold"],
             )
 
     def test_lower_blue_cabinets_do_not_fail_real_estate_qc(self) -> None:
